@@ -516,12 +516,83 @@
     } catch { /* sound is optional */ }
   }
 
+  // The note being written. It survives closing the book (Esc / clicking away) until Done files it.
+  function newDraft() {
+    const id = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return { id: `note-${id}`, createdAt: new Date().toISOString() };
+  }
+
+  let draft = newDraft();
+  // Saves happen while the book is open (typing, closing), so this is "last used".
+  let lastSavedAt = 0;
+  const IDLE_RESET_MS = 10 * 60 * 1000;
+
   function save() {
     clearTimeout(saveTimer);
+    lastSavedAt = Date.now();
     try {
       const runs = documentRuns();
-      localStorage.setItem(storageKey, JSON.stringify({ text: textOf(runs), runs, breaks: manualBreaks }));
+      localStorage.setItem(storageKey, JSON.stringify({
+        ...draft, savedAt: lastSavedAt, text: textOf(runs), runs, breaks: manualBreaks,
+      }));
     } catch { /* Keep the book usable without storage. */ }
+  }
+
+  function hasContent() {
+    return documentText().trim().length > 1;
+  }
+
+  function refreshActions() {
+    const ready = hasContent();
+    exportButton.disabled = !ready;
+    doneButton.disabled = !ready;
+  }
+
+  // Files the note into the Minecraftly inventory (the app's, or this browser's when run standalone).
+  async function storeNote() {
+    const runs = documentRuns();
+    const text = textOf(runs);
+    const item = {
+      ...draft,
+      type: "note",
+      tool: "book-and-quill",
+      title: (text.split("\n").find((line) => line.trim()) || "Untitled").trim().slice(0, 60),
+      text,
+      runs,
+      breaks: manualBreaks,
+      pageCount: pages.length,
+    };
+    if (shell) {
+      await shell.inventory.put(item);
+      return;
+    }
+    const key = "minecraftly-inventory";
+    const items = JSON.parse(localStorage.getItem(key) || "[]").filter((entry) => entry.id !== item.id);
+    localStorage.setItem(key, JSON.stringify([{ ...item, updatedAt: new Date().toISOString() }, ...items]));
+  }
+
+  // After 10+ minutes without the book open, it starts blank again. An unfinished
+  // note is filed into the inventory first, so nothing is lost. Returns true if it reset.
+  async function resetIfIdle({ focus = false } = {}) {
+    if (Date.now() - lastSavedAt < IDLE_RESET_MS) return false;
+    if (hasContent()) {
+      try {
+        await storeNote();
+      } catch {
+        return false; // Couldn't file it: keep showing it rather than lose it.
+      }
+    }
+    startBlankNote({ focus });
+    return true;
+  }
+
+  function startBlankNote({ focus = false } = {}) {
+    draft = newDraft();
+    pages = [[]];
+    manualBreaks = [];
+    currentPage = 0;
+    save();
+    renderPage({ focus, caretOffset: 0 });
   }
 
   function scheduleSave() {
@@ -535,6 +606,7 @@
     previousButton.disabled = currentPage === 0;
     previousButton.setAttribute("aria-disabled", String(previousButton.disabled));
     nextButton.setAttribute("aria-label", currentPage < pages.length - 1 ? "Next page" : "Add a page");
+    refreshActions();
   }
 
   function refreshCaret() {
@@ -672,6 +744,7 @@
     } else {
       pages[currentPage] = nextRuns;
       scheduleCaretRefresh();
+      refreshActions();
     }
     scheduleSave();
   }
@@ -719,7 +792,24 @@
     renderPage({ focus: true, caretOffset: 0 });
   });
 
-  exportButton.addEventListener("click", openExportMenu);
+  function runExport(format) {
+    if (format === "pdf") exportPdf();
+    else if (format === "docx") exportDocx();
+    else if (format === "markdown") exportMarkdown();
+  }
+
+  exportButton.addEventListener("click", async () => {
+    if (!hasContent()) return;
+    if (!shell) {
+      openExportMenu();
+      return;
+    }
+    // In the desktop app the menu opens centered on the screen, not inside the small book window.
+    save();
+    const options = [...exportDialog.querySelectorAll("[data-export]")]
+      .map((button) => ({ id: button.dataset.export, label: button.textContent }));
+    runExport(await shell.choose(exportDialog.querySelector("h1").textContent, options));
+  });
 
   closeExportButton.addEventListener("click", () => closeExportMenu());
 
@@ -751,9 +841,7 @@
       const format = button.dataset.export;
       save();
       closeExportMenu();
-      if (format === "pdf") exportPdf();
-      else if (format === "docx") exportDocx();
-      else if (format === "markdown") exportMarkdown();
+      runExport(format);
     });
   });
 
@@ -768,10 +856,18 @@
 
   window.addEventListener("afterprint", () => printDocument.replaceChildren());
 
-  doneButton.addEventListener("click", () => {
+  // Done: file the note into the inventory, close the book, and start the next note blank.
+  doneButton.addEventListener("click", async () => {
+    if (!hasContent()) return;
     save();
+    try {
+      await storeNote();
+    } catch {
+      return; // Keep the draft (it is still saved) rather than lose the note.
+    }
     editor.blur();
     shell?.hide();
+    startBlankNote({ focus: !shell });
   });
 
   if (shell) {
@@ -779,12 +875,33 @@
     dragStrip.className = "drag-strip";
     scene.append(dragStrip);
 
-    shell.onOpened(() => {
+    shell.onOpened(async () => {
       scene.classList.add("is-open");
       playPageSound();
       closeExportMenu(false);
-      renderPage({ focus: true, caretOffset: lengthOf(pages[currentPage] ?? []) });
+      if (!(await resetIfIdle({ focus: true }))) {
+        renderPage({ focus: true, caretOffset: lengthOf(pages[currentPage] ?? []) });
+      }
     });
+
+    // Expand to the middle of the screen / minimize back to the corner.
+    const resizeToggle = document.querySelector("#resize-toggle");
+    const resizeIcon = resizeToggle.querySelector("img");
+    let mode = "docked";
+    const showMode = (next) => {
+      mode = next;
+      const expanded = mode === "expanded";
+      resizeIcon.src = expanded ? "assets/minimize.png" : "assets/expand.png";
+      resizeToggle.setAttribute("aria-label", expanded ? "Minimize" : "Expand");
+      resizeToggle.title = expanded ? "Minimize" : "Expand";
+    };
+    resizeToggle.hidden = false;
+    resizeToggle.addEventListener("click", () => shell.setMode(mode === "expanded" ? "docked" : "expanded"));
+    shell.onMode((next) => {
+      showMode(next);
+      editor.focus();
+    });
+    showMode("docked");
     shell.onClosing(() => {
       save();
       scene.classList.remove("is-open");
@@ -807,7 +924,7 @@
 
   window.addEventListener("pagehide", save);
 
-  function initialize() {
+  async function initialize() {
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
@@ -818,6 +935,8 @@
         } else if (typeof parsed === "string") {
           pages = paginate([{ text: parsed, bold: false, italic: false }], []);
         } else if (parsed && typeof parsed.text === "string") {
+          if (typeof parsed.id === "string") draft = { id: parsed.id, createdAt: parsed.createdAt };
+          if (Number.isFinite(parsed.savedAt)) lastSavedAt = parsed.savedAt;
           const runs = Array.isArray(parsed.runs)
             ? normalizeRuns(parsed.runs)
             : [{ text: parsed.text, bold: false, italic: false }];
@@ -833,8 +952,10 @@
       pages = [[]];
       manualBreaks = [];
     }
-    currentPage = 0;
-    renderPage({ focus: true, caretOffset: 0 });
+    currentPage = pages.length - 1;
+    if (!(await resetIfIdle({ focus: true }))) {
+      renderPage({ focus: true, caretOffset: lengthOf(pages[currentPage] ?? []) });
+    }
   }
 
   document.fonts.load("400 24px Minecraft");

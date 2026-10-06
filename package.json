@@ -1,6 +1,6 @@
 {
   "name": "minecraftly",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Minecraft-style desktop tools that pop up from your taskbar (Alt+B). First tool: Book & Quill notebook.",
   "author": "Minecraftly",
@@ -8,9 +8,10 @@
   "scripts": {
     "start": "node tools/book-and-quill/serve.js",
     "desktop": "electron .",
-    "dist": "electron-builder --win nsis",
+    "dist": "electron-builder --win nsis --publish never",
     "publish": "node scripts/publish-here-now.cjs",
-    "watch": "node scripts/watch-here-now.cjs"
+    "watch": "node scripts/watch-here-now.cjs",
+    "release": "node scripts/release.cjs"
   },
   "build": {
     "appId": "com.minecraftly.app",
@@ -34,11 +35,23 @@
       "deleteAppDataOnUninstall": false,
       "include": "build/installer.nsh"
     },
-    "artifactName": "Minecraftly-Setup.${ext}"
+    "artifactName": "Minecraftly-Setup.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "sirwinstontea",
+        "repo": "Minecraftly",
+        "releaseType": "release"
+      }
+    ]
   },
   "devDependencies": {
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3"
   },
-  "productName": "Minecraftly"
+  "productName": "Minecraftly",
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "koffi": "^3.3.2"
+  }
 }

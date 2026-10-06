@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Minecraftly</title>
+    <style>
+      @font-face {
+        font-family: "Minecraft";
+        src: url("Minecraft-Regular.otf") format("opentype");
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: rgb(0 0 0 / 45%);
+        font-family: "Minecraft", monospace;
+        user-select: none;
+      }
+
+      body { display: grid; place-items: center; }
+
+      .panel {
+        width: min(86vw, 420px);
+        padding: 22px;
+        border: 4px solid #684128;
+        outline: 2px solid #28180f;
+        background: #eee3c2;
+        color: #1a170f;
+        box-shadow: inset 0 0 0 2px #c7b180, 0 6px 0 #1a100b;
+        text-align: center;
+        animation: pop 120ms steps(3, end);
+      }
+
+      @keyframes pop { from { transform: scale(0.92); opacity: 0; } }
+
+      h1 { margin: 0 0 16px; font: 700 26px/1.2 "Minecraft", monospace; }
+
+      .options { display: grid; gap: 10px; }
+
+      button {
+        min-height: 48px;
+        padding: 4px 8px;
+        border: 2px solid #eee;
+        border-radius: 0;
+        background: #777;
+        box-shadow: inset 3px 3px #999, inset -3px -3px #555;
+        color: #fff;
+        font: 400 20px/1.1 "Minecraft", monospace;
+        text-shadow: 2px 2px #333;
+        cursor: pointer;
+      }
+
+      button:hover, button:focus-visible {
+        background: #e87908;
+        box-shadow: inset 3px 3px #ffad37, inset -3px -3px #b75000;
+        outline: none;
+      }
+
+      button:active { box-shadow: inset 3px 3px #555, inset -3px -3px #999; }
+
+      .back {
+        min-width: 42%;
+        min-height: 40px;
+        margin-top: 14px;
+        background: #6f6653;
+        box-shadow: inset 3px 3px #91856b, inset -3px -3px #514a3d;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="title">
+      <h1 id="title"></h1>
+      <div class="options" id="options"></div>
+      <button class="back" id="back" type="button">Back</button>
+    </div>
+    <script>
+      (async () => {
+        const { title, options } = await window.chooser.get();
+        document.querySelector("#title").textContent = title;
+        const list = document.querySelector("#options");
+        for (const option of options) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = option.label;
+          button.addEventListener("click", () => window.chooser.pick(option.id));
+          list.append(button);
+        }
+        list.querySelector("button")?.focus();
+      })();
+
+      document.querySelector("#back").addEventListener("click", () => window.chooser.pick(null));
+      document.body.addEventListener("click", (event) => {
+        if (event.target === document.body) window.chooser.pick(null);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") window.chooser.pick(null);
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+        const buttons = [...document.querySelectorAll("button")];
+        const index = buttons.indexOf(document.activeElement);
+        const step = event.key === "ArrowDown" ? 1 : -1;
+        buttons[(index + step + buttons.length) % buttons.length].focus();
+        event.preventDefault();
+      });
+    </script>
+  </body>
+</html>

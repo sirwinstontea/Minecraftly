@@ -3,7 +3,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { TOOLS, DEFAULT_TOOL } = require("./tools");
 const { readState, updateState } = require("./state");
-const { flags, createPanel, show, hideAnimated, toggle, panelFor } = require("./panels");
+const {
+  flags, createPanel, show, hideAnimated, toggle, setMode, panelFor, anyPanelVisible,
+} = require("./panels");
+const { createOverlay, setOverlayEnabled, isOverlayEnabled } = require("./overlay");
+const { startAutoUpdates } = require("./updater");
+const { choose } = require("./chooser");
+const { listItems, putItem } = require("./inventory");
 
 const APP_NAME = "Minecraftly";
 // Same options for reading and writing, so Windows matches its startup entry.
@@ -40,6 +46,28 @@ ipcMain.handle("panel:export-pdf", async (event, defaultName = "export.pdf") => 
   }
 });
 
+// A menu centered on the screen (not inside the small tool panel), e.g. Book & Quill's Export.
+ipcMain.handle("panel:choose", async (event, spec) => {
+  const panel = panelFor(event.sender);
+  if (!panel || !Array.isArray(spec?.options)) return null;
+  flags.suppressHide = true;
+  try {
+    return await choose(panel.win, { title: String(spec.title ?? ""), options: spec.options });
+  } finally {
+    flags.suppressHide = false;
+    if (panel.win.isVisible()) panel.win.focus();
+  }
+});
+
+// Expand (big, centered on screen) / minimize (back to its docked spot).
+ipcMain.on("panel:set-mode", (event, mode) => {
+  const panel = panelFor(event.sender);
+  if (panel && (mode === "expanded" || mode === "docked")) setMode(panel, mode);
+});
+
+ipcMain.handle("inventory:list", () => listItems());
+ipcMain.handle("inventory:put", (event, item) => putItem(item));
+
 function registerHotkeys() {
   const working = new Set();
   for (const tool of TOOLS) {
@@ -48,13 +76,10 @@ function registerHotkeys() {
   return working;
 }
 
-function createTray(hotkeysWorking) {
-  tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "icon.ico")));
-  const hotkey = hotkeysWorking.has(DEFAULT_TOOL) ? ` (${DEFAULT_TOOL.hotkey})` : "";
-  tray.setToolTip(`${APP_NAME}${hotkey}`);
-  tray.on("click", () => toggle(DEFAULT_TOOL));
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: APP_NAME, enabled: false },
+// Right-click menu, shared by the tray icon and the grass-block overlay.
+function buildMenu(hotkeysWorking) {
+  return Menu.buildFromTemplate([
+    { label: `${APP_NAME} ${app.getVersion()}`, enabled: false },
     { type: "separator" },
     ...TOOLS.map((tool) => ({
       label: tool.label,
@@ -63,6 +88,16 @@ function createTray(hotkeysWorking) {
       click: () => show(tool),
     })),
     { type: "separator" },
+    {
+      label: "Show grass block on screen",
+      type: "checkbox",
+      checked: isOverlayEnabled(),
+      click: (item) => {
+        setOverlayEnabled(item.checked);
+        updateState({ overlayHidden: !item.checked });
+        refreshMenu();
+      },
+    },
     ...(app.isPackaged ? [{
       label: "Start with Windows",
       type: "checkbox",
@@ -70,16 +105,30 @@ function createTray(hotkeysWorking) {
       click: (item) => app.setLoginItemSettings({ ...loginItem, openAtLogin: item.checked }),
     }] : []),
     { label: `Quit ${APP_NAME}`, click: () => app.quit() },
-  ]));
+  ]);
+}
+
+let menuHotkeys = new Set();
+function refreshMenu() {
+  tray?.setContextMenu(buildMenu(menuHotkeys));
+}
+
+function createTray(hotkeysWorking) {
+  menuHotkeys = hotkeysWorking;
+  tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "icon.ico")));
+  const hotkey = hotkeysWorking.has(DEFAULT_TOOL) ? ` (${DEFAULT_TOOL.hotkey})` : "";
+  tray.setToolTip(`${APP_NAME}${hotkey}`);
+  tray.on("click", () => toggle(DEFAULT_TOOL));
+  refreshMenu();
 }
 
 function welcome(hotkeysWorking) {
   const hotkey = hotkeysWorking.has(DEFAULT_TOOL) ? `, or press ${DEFAULT_TOOL.hotkey} anywhere,` : "";
   tray.displayBalloon({
     iconType: "info",
-    title: `${APP_NAME} lives next to your clock`,
-    content: `Click the ${APP_NAME} icon by the clock${hotkey} to open your tools. `
-      + "If you can't see it, click the ^ arrow and drag it onto the taskbar.",
+    title: `${APP_NAME} is ready`,
+    content: `Click the grass block in the bottom-right corner or the ${APP_NAME} icon by the clock${hotkey} `
+      + "to open your tools.",
   });
 }
 
@@ -94,12 +143,19 @@ function start() {
     updateState({ loginItemConfigured: true });
   }
 
+  setOverlayEnabled(!state.overlayHidden);
+  createOverlay({
+    onClick: () => toggle(DEFAULT_TOOL),
+    onMenu: (window) => buildMenu(menuHotkeys).popup({ window }),
+  });
   for (const tool of TOOLS) createPanel(tool);
   const hotkeysWorking = registerHotkeys();
   createTray(hotkeysWorking);
+  startAutoUpdates({ isIdle: () => !anyPanelVisible() && !flags.suppressHide });
 
-  // Started at login: stay quietly in the tray. Opened by the user: show the default tool.
-  if (process.argv.includes("--hidden")) return;
+  // Started at login or relaunched after an automatic update: stay quietly in the tray.
+  // Opened by the user: show the default tool.
+  if (process.argv.includes("--hidden") || process.argv.includes("--updated")) return;
   show(DEFAULT_TOOL);
   if (!state.welcomed) {
     welcome(hotkeysWorking);

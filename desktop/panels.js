@@ -1,8 +1,9 @@
 const { BrowserWindow, screen } = require("electron");
 const path = require("node:path");
 const { readState, updateState } = require("./state");
+const { dockedBounds, expandedBounds } = require("./layout");
+const { isOverlayEnabled } = require("./overlay");
 
-const MARGIN = 12;
 const panels = new Map();
 const flags = { quitting: false, suppressHide: false };
 let hiddenByBlurAt = 0;
@@ -13,15 +14,31 @@ function fitsOnSomeDisplay({ x, y }, { width, height }) {
   ));
 }
 
-function place({ tool, win }) {
-  const saved = readState().positions?.[tool.id];
-  if (saved && Number.isInteger(saved.x) && Number.isInteger(saved.y) && fitsOnSomeDisplay(saved, tool)) {
-    win.setPosition(saved.x, saved.y);
+// Docked (default): where the user last dragged it, else bottom-right beside the grass block.
+// Expanded: big and centered on the screen. Programmatic moves aren't saved as the user's spot.
+function place(panel) {
+  const { tool, win } = panel;
+  panel.placedAt = Date.now();
+  const area = panel.mode === "expanded"
+    ? screen.getDisplayMatching(win.getBounds()).workArea
+    : screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
+  if (panel.mode === "expanded") {
+    win.setBounds(expandedBounds(area, tool));
     return;
   }
-  // Default: bottom-right, just above the clock, on the screen the mouse is on.
-  const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
-  win.setPosition(area.x + area.width - tool.width - MARGIN, area.y + area.height - tool.height - MARGIN);
+  const saved = readState().positions?.[tool.id];
+  if (saved && Number.isInteger(saved.x) && Number.isInteger(saved.y) && fitsOnSomeDisplay(saved, tool)) {
+    win.setBounds({ x: saved.x, y: saved.y, width: tool.width, height: tool.height });
+    return;
+  }
+  win.setBounds(dockedBounds(area, tool, isOverlayEnabled()));
+}
+
+function setMode(panel, mode) {
+  if (panel.mode === mode) return;
+  panel.mode = mode;
+  place(panel);
+  panel.win.webContents.send("panel:mode", mode);
 }
 
 function createPanel(tool) {
@@ -40,7 +57,7 @@ function createPanel(tool) {
     icon: path.join(__dirname, "icon.png"),
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true },
   });
-  const panel = { tool, win, hideTimer: undefined, shownAt: 0 };
+  const panel = { tool, win, hideTimer: undefined, shownAt: 0, placedAt: 0, mode: "docked" };
   panel.loaded = new Promise((resolve) => win.webContents.once("did-finish-load", resolve));
   win.setAlwaysOnTop(true, "pop-up-menu");
   win.loadFile(path.join(__dirname, "..", "tools", tool.id, "index.html"), { query: { shell: "overlay" } });
@@ -56,6 +73,7 @@ function createPanel(tool) {
     hideAnimated(panel, { byBlur: true });
   });
   win.on("moved", () => {
+    if (panel.mode !== "docked" || Date.now() - panel.placedAt < 500) return;
     const [x, y] = win.getPosition();
     updateState({ positions: { ...readState().positions, [tool.id]: { x, y } } });
   });
@@ -115,4 +133,8 @@ function panelFor(webContents) {
   return [...panels.values()].find((panel) => panel.win.webContents === webContents);
 }
 
-module.exports = { flags, createPanel, show, hideAnimated, toggle, panelFor };
+function anyPanelVisible() {
+  return [...panels.values()].some((panel) => panel.win.isVisible());
+}
+
+module.exports = { flags, createPanel, show, hideAnimated, toggle, setMode, panelFor, anyPanelVisible };

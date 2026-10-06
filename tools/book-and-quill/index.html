@@ -6,12 +6,12 @@
     <meta name="theme-color" content="#000000" />
     <title>Book &amp; Quill</title>
     <link rel="icon" type="image/png" href="assets/minecraftly.png" />
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=18" />
   </head>
   <body>
     <main class="screen" aria-label="Minecraft-style book and quill note editor">
       <section class="scene" aria-label="Book and quill">
-        <img class="artwork" src="assets/book-and-quill.png?v=16" alt="" draggable="false" />
+        <img class="artwork" src="assets/book-and-quill.png?v=18" alt="" draggable="false" />
 
         <div class="page-count" id="page-count">Page 1 of 1</div>
         <div id="book-text" class="writing-area" contenteditable="true" role="textbox"
@@ -21,6 +21,10 @@
         <button class="page-turn page-back" id="previous-page" type="button" aria-label="Previous page" hidden></button>
         <button class="page-turn page-forward" id="next-page" type="button" aria-label="Next page">
           <span class="visually-hidden">Next page</span>
+        </button>
+
+        <button class="resize-toggle" id="resize-toggle" type="button" aria-label="Expand" title="Expand" hidden>
+          <img src="assets/expand.png" alt="" draggable="false" />
         </button>
 
         <button class="hotspot export" id="export-button" type="button" aria-label="Export the book" aria-haspopup="dialog" aria-expanded="false">
@@ -44,6 +48,6 @@
       </section>
     </main>
     <div class="print-document" id="print-document" aria-hidden="true"></div>
-    <script src="app.js?v=16"></script>
+    <script src="app.js?v=18"></script>
   </body>
 </html>

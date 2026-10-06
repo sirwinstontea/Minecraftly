@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Minecraftly</title>
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      button {
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 6px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 2px 0 rgb(0 0 0 / 55%));
+        transition: transform 120ms steps(3, end);
+        pointer-events: none;
+      }
+
+      button:hover img { transform: translateY(-2px) scale(1.06); }
+      button:active img { transform: translateY(1px) scale(0.96); }
+    </style>
+  </head>
+  <body>
+    <button type="button" title="Minecraftly (Alt+B)" aria-label="Open Minecraftly">
+      <img src="../overlay-block.png" alt="" draggable="false" />
+    </button>
+    <script>
+      const button = document.querySelector("button");
+      button.addEventListener("click", () => window.overlay.click());
+      button.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        window.overlay.menu();
+      });
+    </script>
+  </body>
+</html>

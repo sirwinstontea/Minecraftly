@@ -193,6 +193,18 @@ body {
 .done:hover, .done:focus-visible { background: #5fae45; box-shadow: inset 0.5cqw 0.5cqw #93dc74, inset -0.5cqw -0.5cqw #35702a; }
 .done:active { background: #3f7530; box-shadow: inset 0.5cqw 0.5cqw #2d5a20, inset -0.5cqw -0.5cqw #6faf55; }
 
+/* Greyed out until the note has some text, like Minecraft's disabled buttons */
+.hotspot:disabled,
+.hotspot:disabled:hover,
+.hotspot:disabled:active {
+  padding-top: 0;
+  background: #2c2c2c;
+  box-shadow: inset 0.5cqw 0.5cqw #3a3a3a, inset -0.5cqw -0.5cqw #1e1e1e;
+  color: #a0a0a0;
+  text-shadow: none;
+  cursor: default;
+}
+
 .export { left: 6.1%; width: 43.2%; }
 .done { left: 50.7%; width: 43.1%; }
 
@@ -426,3 +438,39 @@ body {
 
 [data-shell="overlay"] button,
 [data-shell="overlay"] .writing-area { -webkit-app-region: no-drag; }
+
+/* Expand / minimize (desktop app only): small stone button in the top-right corner */
+.resize-toggle {
+  position: absolute;
+  z-index: 10;
+  top: 1.2%;
+  right: 1.2%;
+  width: 6.4%;
+  aspect-ratio: 1;
+  padding: 0.9%;
+  border: 0.35cqw solid #000;
+  border-radius: 0;
+  background: #7d7d7d;
+  box-shadow: inset 0.35cqw 0.35cqw #b5b5b5, inset -0.35cqw -0.35cqw #4a4a4a;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.resize-toggle[hidden] { display: none; }
+
+.resize-toggle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.resize-toggle:hover,
+.resize-toggle:focus-visible {
+  background: #6f7fb8;
+  box-shadow: inset 0.35cqw 0.35cqw #a3b1ea, inset -0.35cqw -0.35cqw #3b4777;
+  outline: none;
+}
+
+.resize-toggle:active { box-shadow: inset 0.35cqw 0.35cqw #3b4777, inset -0.35cqw -0.35cqw #8795cb; }
