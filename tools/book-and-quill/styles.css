@@ -1,0 +1,428 @@
+@font-face {
+  font-family: "Minecraft";
+  src: url("assets/Minecraft-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Minecraft";
+  src: url("assets/Minecraft-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Minecraft";
+  src: url("assets/Minecraft-Italic.otf") format("opentype");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Minecraft";
+  src: url("assets/Minecraft-BoldItalic.otf") format("opentype");
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --ink: #17140d;
+  --text-size: clamp(12px, 3.6cqw, 42px);
+  color-scheme: dark;
+  background: #000;
+  font-family: "Minecraft", monospace;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+html, body { width: 100%; min-width: 280px; min-height: 100%; margin: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  background: #000;
+}
+
+.screen {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+}
+
+.scene {
+  position: relative;
+  width: min(94vw, 1000px, calc(88svh * 1.082));
+  aspect-ratio: 1305 / 1206;
+  container-type: inline-size;
+  flex: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.page-count {
+  position: absolute;
+  z-index: 3;
+  top: 8.3%;
+  left: 45%;
+  width: 30%;
+  height: 5.8%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 1.5% 0 0;
+  background: transparent;
+  color: var(--ink);
+  font: 400 var(--text-size)/1 "Minecraft", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.writing-area {
+  position: absolute;
+  left: 26.8%;
+  top: 16.8%;
+  width: 45.8%;
+  height: 53.2%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  overflow: auto;
+  background: transparent;
+  color: var(--ink);
+  caret-color: transparent;
+  font: 400 var(--text-size)/1.12 "Minecraft", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+  user-select: text;
+  scrollbar-width: none;
+}
+
+.writing-area::-webkit-scrollbar { display: none; }
+
+.writing-area:focus-visible { outline: none; }
+
+.writing-area div,
+.writing-area p,
+.writing-area li { margin: 0; padding: 0; }
+
+.text-run.is-bold { font-weight: 700; }
+.text-run.is-italic { font-style: italic; }
+
+.underscore-caret {
+  position: absolute;
+  z-index: 2;
+  display: none;
+  width: 0.6em;
+  height: 0.12em;
+  background: var(--ink);
+  font-size: var(--text-size);
+  pointer-events: none;
+  animation: underscore-blink 1s steps(2, end) infinite;
+}
+
+.underscore-caret.visible { display: block; }
+
+@keyframes underscore-blink {
+  50% { opacity: 0; }
+}
+
+.hotspot {
+  position: absolute;
+  top: 85.6%;
+  height: 9.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0.45cqw solid #000;
+  border-radius: 0;
+  background: #7d7d7d;
+  box-shadow: inset 0.5cqw 0.5cqw #b5b5b5, inset -0.5cqw -0.5cqw #4a4a4a;
+  color: #fff;
+  font: 400 clamp(11px, 3.4cqw, 40px)/1 "Minecraft", monospace;
+  text-shadow: 0.35cqw 0.35cqw #2e2e2e;
+  cursor: pointer;
+  image-rendering: pixelated;
+}
+
+.hotspot .visually-hidden {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  clip: auto;
+  overflow: visible;
+}
+
+.hotspot:hover,
+.hotspot:focus-visible {
+  background: #6f7fb8;
+  box-shadow: inset 0.5cqw 0.5cqw #a3b1ea, inset -0.5cqw -0.5cqw #3b4777;
+}
+
+.hotspot:focus-visible { outline: 0.4cqw solid #fff; outline-offset: 0.2cqw; }
+
+.hotspot:active {
+  background: #5b6aa0;
+  box-shadow: inset 0.5cqw 0.5cqw #3b4777, inset -0.5cqw -0.5cqw #8795cb;
+  padding-top: 0.4cqw;
+}
+
+.done { background: #4f8f3a; box-shadow: inset 0.5cqw 0.5cqw #7fc261, inset -0.5cqw -0.5cqw #2d5a20; }
+.done:hover, .done:focus-visible { background: #5fae45; box-shadow: inset 0.5cqw 0.5cqw #93dc74, inset -0.5cqw -0.5cqw #35702a; }
+.done:active { background: #3f7530; box-shadow: inset 0.5cqw 0.5cqw #2d5a20, inset -0.5cqw -0.5cqw #6faf55; }
+
+.export { left: 6.1%; width: 43.2%; }
+.done { left: 50.7%; width: 43.1%; }
+
+.export-dialog {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 5%;
+  background: rgb(0 0 0 / 58%);
+  user-select: none;
+}
+
+.export-dialog[hidden] { display: none; }
+
+.export-panel {
+  width: min(78cqw, 480px);
+  padding: clamp(12px, 2.4cqw, 24px);
+  border: clamp(2px, .45cqw, 4px) solid #684128;
+  outline: clamp(1px, .25cqw, 2px) solid #28180f;
+  background: #eee3c2;
+  color: #1a170f;
+  box-shadow: inset 0 0 0 clamp(1px, .25cqw, 2px) #c7b180, 0 5px 0 #1a100b;
+  text-align: center;
+}
+
+.export-panel h1 {
+  margin: 0 0 clamp(10px, 1.6cqw, 16px);
+  font: clamp(14px, 2.6cqw, 26px)/1.2 "Minecraft", monospace;
+}
+
+.export-options {
+  display: grid;
+  gap: clamp(6px, 1cqw, 10px);
+}
+
+.export-option,
+.export-back {
+  min-height: clamp(31px, 5.2cqw, 52px);
+  padding: 4px 8px;
+  border: 2px solid #eee;
+  border-radius: 0;
+  background: #777;
+  box-shadow: inset 3px 3px #999, inset -3px -3px #555;
+  color: #fff;
+  font: 400 clamp(11px, 2.2cqw, 22px)/1.1 "Minecraft", monospace;
+  text-shadow: 2px 2px #333;
+  cursor: pointer;
+  image-rendering: pixelated;
+}
+
+.export-option:hover,
+.export-option:focus-visible,
+.export-back:hover,
+.export-back:focus-visible {
+  background: #e87908;
+  box-shadow: inset 3px 3px #ffad37, inset -3px -3px #b75000;
+}
+
+.export-option:focus-visible,
+.export-back:focus-visible {
+  outline: 2px dashed #67401f;
+  outline-offset: 3px;
+}
+
+.export-back {
+  min-height: clamp(27px, 4.2cqw, 42px);
+  min-width: 42%;
+  margin-top: clamp(8px, 1.4cqw, 14px);
+  background: #6f6653;
+  box-shadow: inset 3px 3px #91856b, inset -3px -3px #514a3d;
+}
+
+.print-document { display: none; }
+
+.page-turn {
+  position: absolute;
+  top: 70.3%;
+  width: 10.2%;
+  height: 6.3%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page-turn::before,
+.page-turn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.page-turn::before { z-index: 2; }
+.page-turn::after { z-index: 1; }
+
+.page-turn::before {
+  background-color: #c5b797;
+  mask: center / 100% 100% no-repeat;
+  -webkit-mask: center / 100% 100% no-repeat;
+  transition: background-color 100ms steps(2, end);
+}
+
+.page-turn:hover::before,
+.page-turn:focus-visible::before { background-color: #f1850c; }
+
+.page-turn:focus-visible { outline: 1px dashed #8f6a32; outline-offset: 2px; }
+
+.page-back { left: 23.2%; }
+.page-back::before {
+  mask-image: url("assets/arrow-left.png");
+  -webkit-mask-image: url("assets/arrow-left.png");
+}
+
+.page-forward { left: 61.2%; }
+.page-forward::after {
+  background: #faf5e7;
+  mask-image: url("assets/arrow-right.png");
+  mask-position: center;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("assets/arrow-right.png");
+  -webkit-mask-position: center;
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+}
+.page-forward::before {
+  mask-image: url("assets/arrow-right.png");
+  -webkit-mask-image: url("assets/arrow-right.png");
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-height: 520px) {
+  .scene { width: min(94vw, calc(92svh * 1.082)); }
+}
+
+@media (max-width: 520px) {
+  .screen { padding: 6px; }
+  .scene { width: min(96vw, calc(88svh * 1.082)); }
+}
+
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+
+  html, body {
+    width: 297mm;
+    height: 210mm;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+    background: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .screen { display: none !important; }
+
+  .print-document { display: block !important; }
+
+  .print-page {
+    display: grid;
+    width: 297mm;
+    height: 210mm;
+    place-items: center;
+    overflow: hidden;
+    background: #000;
+    page-break-after: always;
+    break-after: page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .print-scene {
+    width: 210mm;
+    height: 194mm;
+  }
+
+  .print-writing {
+    overflow: hidden;
+    user-select: none;
+  }
+}
+
+/* Desktop overlay shell (Electron): only the book floats, slides up on open */
+[data-shell="overlay"],
+[data-shell="overlay"] body,
+[data-shell="overlay"] .screen { background: transparent; }
+
+[data-shell="overlay"] .screen { padding: 0; }
+
+@media print {
+  [data-shell="overlay"],
+  [data-shell="overlay"] body { background: #000; }
+}
+
+[data-shell="overlay"] .screen > .scene {
+  width: 100vw;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: transform 140ms steps(4, end), opacity 140ms steps(4, end);
+}
+
+[data-shell="overlay"] .screen > .scene.is-open { opacity: 1; transform: none; }
+
+.drag-strip {
+  position: absolute;
+  z-index: 9;
+  inset: 0 0 auto;
+  height: 7%;
+  cursor: grab;
+  -webkit-app-region: drag;
+}
+
+[data-shell="overlay"] button,
+[data-shell="overlay"] .writing-area { -webkit-app-region: no-drag; }
