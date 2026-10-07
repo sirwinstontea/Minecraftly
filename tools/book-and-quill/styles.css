@@ -439,19 +439,20 @@ body {
 [data-shell="overlay"] button,
 [data-shell="overlay"] .writing-area { -webkit-app-region: no-drag; }
 
-/* Expand / minimize (desktop app only): small stone button in the top-right corner */
+/* Expand / minimize (desktop app only): stone button beside the book's top-right corner.
+   The book art spans 18.2%-80.1% across and starts 2.6% down; the 27px icon art shows ~1:1 when docked. */
 .resize-toggle {
   position: absolute;
   z-index: 10;
-  top: 1.2%;
-  right: 1.2%;
-  width: 6.4%;
+  top: 2.6%;
+  left: 81.6%;
+  width: 8%;
   aspect-ratio: 1;
-  padding: 0.9%;
-  border: 0.35cqw solid #000;
+  padding: 0.45%;
+  border: 0.35cqw solid #28180f;
   border-radius: 0;
-  background: #7d7d7d;
-  box-shadow: inset 0.35cqw 0.35cqw #b5b5b5, inset -0.35cqw -0.35cqw #4a4a4a;
+  background: #eee3c2;
+  box-shadow: inset 0.35cqw 0.35cqw #fffaf0, inset -0.35cqw -0.35cqw #c7b180;
   cursor: pointer;
   -webkit-app-region: no-drag;
 }
@@ -468,9 +469,9 @@ body {
 
 .resize-toggle:hover,
 .resize-toggle:focus-visible {
-  background: #6f7fb8;
-  box-shadow: inset 0.35cqw 0.35cqw #a3b1ea, inset -0.35cqw -0.35cqw #3b4777;
+  background: #ffd98a;
+  box-shadow: inset 0.35cqw 0.35cqw #fff1c9, inset -0.35cqw -0.35cqw #d9a441;
   outline: none;
 }
 
-.resize-toggle:active { box-shadow: inset 0.35cqw 0.35cqw #3b4777, inset -0.35cqw -0.35cqw #8795cb; }
+.resize-toggle:active { box-shadow: inset 0.35cqw 0.35cqw #c7b180, inset -0.35cqw -0.35cqw #fffaf0; }
