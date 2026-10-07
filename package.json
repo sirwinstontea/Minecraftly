@@ -11,7 +11,8 @@
     "dist": "electron-builder --win nsis --publish never",
     "publish": "node scripts/publish-here-now.cjs",
     "watch": "node scripts/watch-here-now.cjs",
-    "release": "node scripts/release.cjs"
+    "release": "node scripts/release.cjs",
+    "install-local": "node scripts/install-local.cjs"
   },
   "build": {
     "appId": "com.minecraftly.app",

@@ -59,6 +59,8 @@ Installed copies check this repo's GitHub Releases every few hours and update th
 
 Auto-updates need the release files to be publicly downloadable, so they only reach users while the repo is public.
 
+The PC you release from gets the new version immediately: `npm run release` installs it there silently and restarts it in the tray. To pull the latest release onto your own PC at any other time, run `npm run install-local`.
+
 ## Project layout
 
 - `desktop/` holds the Electron shell:

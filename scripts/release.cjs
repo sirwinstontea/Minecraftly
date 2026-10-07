@@ -2,7 +2,7 @@
 // Minecraftly check that release feed and update themselves automatically.
 //
 //   1. Bump "version" in package.json (e.g. 1.1.0 -> 1.2.0)
-//   2. npm run release
+//   2. npm run release   (also installs it on this PC right away)
 //
 // Needs the GitHub CLI (https://cli.github.com) logged in with push access to the repo.
 const { execFileSync } = require("node:child_process");
@@ -22,3 +22,6 @@ for (const asset of assets) {
 }
 run("gh", ["release", "create", tag, ...assets, "--title", `Minecraftly ${version}`, "--generate-notes", "--latest"]);
 console.log(`Released ${tag}. Installed copies will update within a few hours.`);
+
+// This PC gets the new version immediately (the one that just shipped).
+run("node", [path.join(__dirname, "install-local.cjs"), path.join(root, "dist", "Minecraftly-Setup.exe")]);
