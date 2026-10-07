@@ -360,15 +360,18 @@ body {
 }
 
 @media print {
-  @page { size: A4 landscape; margin: 0; }
+  /* One notebook page per A4 sheet, cropped to just the book (the artwork's
+     baked-in Export/Done buttons and margins are cut off). Book in the art:
+     x 238-1045 px, y 31-990 px of 1305 x 1206. */
+  @page { size: A4 portrait; margin: 0; }
 
   html, body {
-    width: 297mm;
-    height: 210mm;
+    width: 210mm;
+    height: 297mm;
     min-width: 0;
     min-height: 0;
     overflow: visible;
-    background: #000;
+    background: #fff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -379,11 +382,11 @@ body {
 
   .print-page {
     display: grid;
-    width: 297mm;
-    height: 210mm;
+    width: 210mm;
+    height: 297mm;
     place-items: center;
     overflow: hidden;
-    background: #000;
+    background: #fff;
     page-break-after: always;
     break-after: page;
     -webkit-print-color-adjust: exact;
@@ -395,9 +398,19 @@ body {
     break-after: auto;
   }
 
-  .print-scene {
-    width: 210mm;
-    height: 194mm;
+  .print-crop {
+    position: relative;
+    height: 240mm;
+    aspect-ratio: 807 / 959;
+    overflow: hidden;
+  }
+
+  .print-crop > .print-scene {
+    position: absolute;
+    top: -3.23%;
+    left: -29.49%;
+    width: 161.71%;
+    height: auto;
   }
 
   .print-writing {
@@ -415,7 +428,7 @@ body {
 
 @media print {
   [data-shell="overlay"],
-  [data-shell="overlay"] body { background: #000; }
+  [data-shell="overlay"] body { background: #fff; }
 }
 
 [data-shell="overlay"] .screen > .scene {

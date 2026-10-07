@@ -438,7 +438,7 @@
       printScene.className = "scene print-scene";
       const artwork = document.createElement("img");
       artwork.className = "artwork";
-      artwork.src = "assets/book-and-quill.png?v=15";
+      artwork.src = "assets/book-and-quill.png";
       artwork.alt = "";
       artwork.draggable = false;
       const count = document.createElement("div");
@@ -448,9 +448,27 @@
       writing.className = "writing-area print-writing";
       writing.innerHTML = runsToHtml(runs);
       printScene.append(artwork, count, writing);
-      page.append(printScene);
+      // Crop to just the book: the artwork also draws Export/Done buttons below it.
+      const crop = document.createElement("div");
+      crop.className = "print-crop";
+      crop.append(printScene);
+      page.append(crop);
       printDocument.append(page);
     });
+    return Promise.all([...printDocument.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
+  }
+
+  // File name from what the note says: its first line, trimmed to a few words,
+  // with characters Windows doesn't allow in file names removed.
+  function noteFileName(extension) {
+    const firstLine = documentText().split("\n").map((line) => line.trim()).find(Boolean) || "";
+    let name = firstLine
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+      .split(/\s+/).filter(Boolean).slice(0, 8).join(" ")
+      .slice(0, 60)
+      .replace(/[\s.]+$/, "");
+    if (!name || /^(con|prn|aux|nul|com\d|lpt\d)$/i.test(name)) name = "Untitled note";
+    return `${name}.${extension}`;
   }
 
   function closeExportMenu(restoreFocus = true) {
@@ -469,20 +487,24 @@
 
   function exportMarkdown() {
     const content = markdownFromRuns(documentRuns());
-    downloadFile("book-and-quill.md", new Blob([content], { type: "text/markdown;charset=utf-8" }));
+    downloadFile(noteFileName("md"), new Blob([content], { type: "text/markdown;charset=utf-8" }));
   }
 
   function exportDocx() {
-    downloadFile("book-and-quill.docx", buildDocx(documentRuns()));
+    downloadFile(noteFileName("docx"), buildDocx(documentRuns()));
   }
 
   async function exportPdf() {
-    makePrintDocument();
+    await makePrintDocument();
     if (!shell) {
+      // Browsers suggest the page title as the PDF's file name.
+      const title = document.title;
+      document.title = noteFileName("pdf").replace(/\.pdf$/, "");
+      window.addEventListener("afterprint", () => { document.title = title; }, { once: true });
       window.print();
       return;
     }
-    try { await shell.exportPdf("book-and-quill.pdf"); } finally { printDocument.replaceChildren(); }
+    try { await shell.exportPdf(noteFileName("pdf")); } finally { printDocument.replaceChildren(); }
   }
 
   let pageSound;

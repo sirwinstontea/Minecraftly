@@ -4,7 +4,7 @@ const path = require("node:path");
 const { TOOLS, DEFAULT_TOOL } = require("./tools");
 const { readState, updateState } = require("./state");
 const {
-  flags, createPanel, show, hideAnimated, toggle, setMode, panelFor, anyPanelVisible,
+  flags, createPanel, hideAnimated, toggle, setMode, panelFor, anyPanelVisible,
 } = require("./panels");
 const { createOverlay, setOverlayEnabled, isOverlayEnabled } = require("./overlay");
 const { startAutoUpdates } = require("./updater");
@@ -19,9 +19,23 @@ let tray;
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  // Launching again from the Start menu / desktop shortcut brings the default tool up.
-  app.on("second-instance", () => show(DEFAULT_TOOL));
+  // Launching again from a shortcut while it's running: same as every other way in.
+  app.on("second-instance", (event, argv) => {
+    if (!isQuietStart(argv)) summon(DEFAULT_TOOL);
+  });
   app.whenReady().then(start);
+}
+
+// Every way of calling Minecraftly (desktop or Start-menu shortcut, tray icon, grass block,
+// Alt+B, menu) goes through summon(), so it behaves the same however it was called.
+// Keep it that way when adding new entry points.
+function summon(tool) {
+  toggle(tool);
+}
+
+// Started at login or relaunched after an automatic update: stay quietly in the tray.
+function isQuietStart(argv) {
+  return argv.includes("--hidden") || argv.includes("--updated");
 }
 
 ipcMain.on("panel:hide", (event) => {
@@ -32,7 +46,7 @@ ipcMain.on("panel:hide", (event) => {
 ipcMain.handle("panel:export-pdf", async (event, defaultName = "export.pdf") => {
   const panel = panelFor(event.sender);
   if (!panel) return;
-  const pdf = await panel.win.webContents.printToPDF({ landscape: true, pageSize: "A4", printBackground: true });
+  const pdf = await panel.win.webContents.printToPDF({ printBackground: true, preferCSSPageSize: true });
   flags.suppressHide = true;
   try {
     const { canceled, filePath } = await dialog.showSaveDialog(panel.win, {
@@ -71,7 +85,7 @@ ipcMain.handle("inventory:put", (event, item) => putItem(item));
 function registerHotkeys() {
   const working = new Set();
   for (const tool of TOOLS) {
-    if (tool.hotkey && globalShortcut.register(tool.hotkey, () => toggle(tool))) working.add(tool);
+    if (tool.hotkey && globalShortcut.register(tool.hotkey, () => summon(tool))) working.add(tool);
   }
   return working;
 }
@@ -85,7 +99,7 @@ function buildMenu(hotkeysWorking) {
       label: tool.label,
       accelerator: hotkeysWorking.has(tool) ? tool.hotkey : undefined,
       registerAccelerator: false,
-      click: () => show(tool),
+      click: () => summon(tool),
     })),
     { type: "separator" },
     {
@@ -118,7 +132,7 @@ function createTray(hotkeysWorking) {
   tray = new Tray(nativeImage.createFromPath(path.join(__dirname, "icon.ico")));
   const hotkey = hotkeysWorking.has(DEFAULT_TOOL) ? ` (${DEFAULT_TOOL.hotkey})` : "";
   tray.setToolTip(`${APP_NAME}${hotkey}`);
-  tray.on("click", () => toggle(DEFAULT_TOOL));
+  tray.on("click", () => summon(DEFAULT_TOOL));
   refreshMenu();
 }
 
@@ -145,7 +159,7 @@ function start() {
 
   setOverlayEnabled(!state.overlayHidden);
   createOverlay({
-    onClick: () => toggle(DEFAULT_TOOL),
+    onClick: () => summon(DEFAULT_TOOL),
     onMenu: (window) => buildMenu(menuHotkeys).popup({ window }),
   });
   for (const tool of TOOLS) createPanel(tool);
@@ -153,10 +167,8 @@ function start() {
   createTray(hotkeysWorking);
   startAutoUpdates({ isIdle: () => !anyPanelVisible() && !flags.suppressHide });
 
-  // Started at login or relaunched after an automatic update: stay quietly in the tray.
-  // Opened by the user: show the default tool.
-  if (process.argv.includes("--hidden") || process.argv.includes("--updated")) return;
-  show(DEFAULT_TOOL);
+  if (isQuietStart(process.argv)) return;
+  summon(DEFAULT_TOOL);
   if (!state.welcomed) {
     welcome(hotkeysWorking);
     updateState({ welcomed: true });
