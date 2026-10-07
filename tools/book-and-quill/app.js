@@ -570,9 +570,16 @@
     doneButton.disabled = !ready;
   }
 
+  // What was last filed into (or opened from) the inventory, so unchanged notes aren't re-saved.
+  let storedSnapshot = null;
+  const snapshotOf = (runs, breaks) => JSON.stringify([runs, breaks]);
+
   // Files the note into the Minecraftly inventory (the app's, or this browser's when run standalone).
+  // Throws if it can't (e.g. the inventory is full).
   async function storeNote() {
     const runs = documentRuns();
+    const snapshot = snapshotOf(runs, manualBreaks);
+    if (snapshot === storedSnapshot) return;
     const text = textOf(runs);
     const item = {
       ...draft,
@@ -586,11 +593,60 @@
     };
     if (shell) {
       await shell.inventory.put(item);
-      return;
+    } else {
+      const key = "minecraftly-inventory";
+      const items = JSON.parse(localStorage.getItem(key) || "[]").filter((entry) => entry.id !== item.id);
+      localStorage.setItem(key, JSON.stringify([{ ...item, updatedAt: new Date().toISOString() }, ...items]));
     }
-    const key = "minecraftly-inventory";
-    const items = JSON.parse(localStorage.getItem(key) || "[]").filter((entry) => entry.id !== item.id);
-    localStorage.setItem(key, JSON.stringify([{ ...item, updatedAt: new Date().toISOString() }, ...items]));
+    storedSnapshot = snapshot;
+  }
+
+  // Short message over the book, e.g. when the inventory has no room left.
+  let noticeTimer;
+  function showNotice(text) {
+    let notice = scene.querySelector(".book-notice");
+    if (!notice) {
+      notice = Object.assign(document.createElement("div"), { className: "book-notice", role: "status" });
+      scene.append(notice);
+    }
+    notice.textContent = text;
+    notice.hidden = false;
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => { notice.hidden = true; }, 4500);
+  }
+
+  function storeFailedNotice(error) {
+    showNotice(String(error?.message).includes("INVENTORY_FULL")
+      ? "Your inventory is full. Throw something away to make room."
+      : "Couldn't save this note. It's still here.");
+  }
+
+  // Files the current note (if it has text) before switching to another one. False = keep it open.
+  async function fileCurrentNote() {
+    if (!hasContent()) return true;
+    try {
+      await storeNote();
+      return true;
+    } catch (error) {
+      storeFailedNotice(error);
+      return false;
+    }
+  }
+
+  // Opens a note from the inventory; Done will update that same item.
+  function openSavedNote(item) {
+    const runs = Array.isArray(item.runs)
+      ? normalizeRuns(item.runs)
+      : [{ text: String(item.text || ""), bold: false, italic: false }];
+    draft = { id: item.id, createdAt: item.createdAt };
+    manualBreaks = Array.isArray(item.breaks)
+      ? item.breaks.filter((offset) => Number.isInteger(offset) && offset >= 0 && offset <= lengthOf(runs))
+      : [];
+    pages = paginate(runs, manualBreaks);
+    currentPage = 0;
+    storedSnapshot = snapshotOf(documentRuns(), manualBreaks);
+    save();
+    renderPage({ focus: true, caretOffset: lengthOf(pages[0] ?? []) });
   }
 
   // After 10+ minutes without the book open, it starts blank again. An unfinished
@@ -610,6 +666,7 @@
 
   function startBlankNote({ focus = false } = {}) {
     draft = newDraft();
+    storedSnapshot = null;
     pages = [[]];
     manualBreaks = [];
     currentPage = 0;
@@ -884,8 +941,9 @@
     save();
     try {
       await storeNote();
-    } catch {
-      return; // Keep the draft (it is still saved) rather than lose the note.
+    } catch (error) {
+      storeFailedNotice(error); // keep the note open rather than lose it
+      return;
     }
     editor.blur();
     shell?.hide();
@@ -897,12 +955,22 @@
     dragStrip.className = "drag-strip";
     scene.append(dragStrip);
 
-    shell.onOpened(async () => {
+    // Opened plainly (Alt+B), for a new note (the + slot), or with a saved note from a slot.
+    shell.onOpened(async (intent) => {
       scene.classList.add("is-open");
       playPageSound();
       closeExportMenu(false);
-      if (!(await resetIfIdle({ focus: true }))) {
-        renderPage({ focus: true, caretOffset: lengthOf(pages[currentPage] ?? []) });
+      const showCurrent = () => renderPage({ focus: true, caretOffset: lengthOf(pages[currentPage] ?? []) });
+      if (intent?.type === "new") {
+        if (await fileCurrentNote()) startBlankNote({ focus: true });
+        else showCurrent();
+      } else if (intent?.type === "load" && intent.item) {
+        if (intent.item.id === draft.id) showCurrent(); // already open (maybe with unsaved edits)
+        else if (await fileCurrentNote()) openSavedNote(intent.item);
+        else showCurrent();
+        if (intent.then?.export && intent.item.id === draft.id) runExport(intent.then.export);
+      } else if (!(await resetIfIdle({ focus: true }))) {
+        showCurrent();
       }
     });
 

@@ -1,12 +1,12 @@
 const { BrowserWindow, screen } = require("electron");
 const path = require("node:path");
 const { readState, updateState } = require("./state");
-const { dockedBounds, expandedBounds } = require("./layout");
+const { dockedBounds, expandedBounds, hotbarBounds, inventoryBounds } = require("./layout");
 const { isOverlayEnabled } = require("./overlay");
 
 const panels = new Map();
 const flags = { quitting: false, suppressHide: false };
-let hiddenByBlurAt = 0;
+let hiddenByBlur = { id: undefined, at: 0 };
 
 function fitsOnSomeDisplay({ x, y }, { width, height }) {
   return screen.getAllDisplays().some(({ workArea: a }) => (
@@ -19,6 +19,15 @@ function fitsOnSomeDisplay({ x, y }, { width, height }) {
 function place(panel) {
   const { tool, win } = panel;
   panel.placedAt = Date.now();
+  // Fixed spots: the vertical bar above the grass block, the full inventory centered.
+  if (tool.placement === "hotbar") {
+    win.setBounds(hotbarBounds());
+    return;
+  }
+  if (tool.placement === "center") {
+    win.setBounds(inventoryBounds(screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea));
+    return;
+  }
   const area = panel.mode === "expanded"
     ? screen.getDisplayMatching(win.getBounds()).workArea
     : screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
@@ -43,8 +52,8 @@ function setMode(panel, mode) {
 
 function createPanel(tool) {
   const win = new BrowserWindow({
-    width: tool.width,
-    height: tool.height,
+    width: tool.width || 100,
+    height: tool.height || 100,
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
@@ -98,7 +107,8 @@ function createPanel(tool) {
   return panel;
 }
 
-async function show(tool) {
+// `intent` tells the tool why it was opened, e.g. { type: "load", item } for the notebook.
+async function show(tool, intent = null) {
   const panel = panels.get(tool.id) || createPanel(tool);
   await panel.loaded;
   for (const other of panels.values()) if (other !== panel) hideAnimated(other);
@@ -108,12 +118,12 @@ async function show(tool) {
   panel.shownAt = Date.now();
   panel.win.showInactive();
   panel.win.focus();
-  panel.win.webContents.send("panel:opened");
+  panel.win.webContents.send("panel:opened", intent);
 }
 
 function hideAnimated(panel, { byBlur = false } = {}) {
   if (!panel.win.isVisible() || panel.hideTimer) return;
-  if (byBlur) hiddenByBlurAt = Date.now();
+  if (byBlur) hiddenByBlur = { id: panel.tool.id, at: Date.now() };
   panel.win.webContents.send("panel:closing");
   panel.hideTimer = setTimeout(() => {
     panel.hideTimer = undefined;
@@ -121,9 +131,24 @@ function hideAnimated(panel, { byBlur = false } = {}) {
   }, 140);
 }
 
+// Which panel (if any) a click elsewhere closed in the last moment. Clicking the tray icon
+// blurs the open panel before the click arrives, so callers can tell what was open.
+function justHiddenByBlur() {
+  return Date.now() - hiddenByBlur.at < 400 ? hiddenByBlur.id : undefined;
+}
+
+function isVisible(id) {
+  const panel = panels.get(id);
+  return Boolean(panel?.win.isVisible() && !panel.hideTimer);
+}
+
+function hideById(id) {
+  const panel = panels.get(id);
+  if (panel) hideAnimated(panel);
+}
+
 function toggle(tool) {
-  // Clicking the tray icon blurs the open panel first; treat that click as "close", not "reopen".
-  if (Date.now() - hiddenByBlurAt < 400) return;
+  if (justHiddenByBlur()) return;
   const panel = panels.get(tool.id);
   if (panel?.win.isVisible() && !panel.hideTimer) hideAnimated(panel);
   else show(tool);
@@ -137,4 +162,11 @@ function anyPanelVisible() {
   return [...panels.values()].some((panel) => panel.win.isVisible());
 }
 
-module.exports = { flags, createPanel, show, hideAnimated, toggle, setMode, panelFor, anyPanelVisible };
+function allPanels() {
+  return [...panels.values()];
+}
+
+module.exports = {
+  flags, createPanel, show, hideAnimated, hideById, toggle, setMode, panelFor, anyPanelVisible,
+  isVisible, justHiddenByBlur, allPanels,
+};

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Inventory</title>
+    <link rel="stylesheet" href="../shared/inventory.css" />
+    <style>
+      /* Geometry must match desktop/layout.js: 24px window margin, 10px frame,
+         28px title, 3 storage rows, 10px gap, hotbar row. */
+      body {
+        display: grid;
+        padding: 24px;
+        place-items: center;
+      }
+
+      .inventory { padding: 8px; }
+
+      h1 {
+        height: 28px;
+        margin: 0;
+        padding: 2px 2px 0;
+        color: #404040;
+        font: 400 18px/26px "Minecraft", monospace;
+      }
+
+      .grid { display: grid; grid-template-columns: repeat(9, var(--slot)); }
+      .hotbar-row { margin-top: 10px; }
+
+      .rename {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: grid;
+        place-items: center;
+        background: rgb(0 0 0 / 45%);
+      }
+
+      .rename[hidden] { display: none; }
+
+      .rename form {
+        display: grid;
+        gap: 10px;
+        width: min(360px, 90vw);
+        padding: 12px;
+      }
+
+      .rename label { color: #404040; font-size: 16px; }
+
+      .rename input {
+        width: 100%;
+        padding: 6px 8px;
+        border: 2px solid #a0a0a0;
+        outline: 2px solid #000;
+        background: #000;
+        color: #fff;
+        font: 400 16px "Minecraft", monospace;
+      }
+
+      .rename .actions { display: flex; gap: 8px; justify-content: flex-end; }
+    </style>
+  </head>
+  <body>
+    <div class="inventory mc-panel" role="dialog" aria-label="Inventory">
+      <h1>Inventory</h1>
+      <div class="grid storage"></div>
+      <div class="grid hotbar-row"></div>
+    </div>
+
+    <div class="rename" hidden>
+      <form class="mc-panel is-open">
+        <label for="rename-input">Rename item</label>
+        <input id="rename-input" maxlength="60" autocomplete="off" spellcheck="false" />
+        <div class="actions">
+          <button class="mc-button" type="button" data-cancel>Cancel</button>
+          <button class="mc-button" type="submit">Done</button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      // Slots 9-35 are storage (3 rows), 0-8 the hotbar row at the bottom.
+      const addSlots = (container, from, to) => {
+        for (let index = from; index <= to; index += 1) {
+          const slot = document.createElement("div");
+          slot.className = "slot";
+          slot.dataset.index = String(index);
+          container.append(slot);
+        }
+      };
+      addSlots(document.querySelector(".storage"), 9, 35);
+      addSlots(document.querySelector(".hotbar-row"), 0, 8);
+
+      const sizeSlots = () => {
+        const slot = Math.floor((innerWidth - 48 - 20) / 9);
+        document.documentElement.style.setProperty("--slot", `${slot}px`);
+      };
+      sizeSlots();
+      addEventListener("resize", sizeSlots);
+    </script>
+    <script src="../shared/inventory.js"></script>
+    <script>
+      const ui = InventoryUI.mount({ panel: document.querySelector(".inventory") });
+
+      // Rename (asked for from the right-click menu).
+      const rename = document.querySelector(".rename");
+      const input = rename.querySelector("input");
+      let renamingId = null;
+      const closeRename = () => {
+        rename.hidden = true;
+        renamingId = null;
+      };
+      window.minecraftly.inventory.onRenameRequest((id) => {
+        const item = ui.items().find((entry) => entry.id === id);
+        if (!item) return;
+        renamingId = id;
+        input.value = item.title || "";
+        rename.hidden = false;
+        input.focus();
+        input.select();
+      });
+      rename.querySelector("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (renamingId && input.value.trim()) window.minecraftly.inventory.rename(renamingId, input.value);
+        closeRename();
+      });
+      rename.querySelector("[data-cancel]").addEventListener("click", closeRename);
+      rename.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault(); // close the rename box, not the inventory
+        closeRename();
+      }, true);
+    </script>
+  </body>
+</html>

@@ -26,10 +26,13 @@ Run `Minecraftly-Setup.exe` by double-clicking it in File Explorer; don't open i
 
 After installing, Minecraftly starts with Windows and shows a **grass block** in the bottom-right corner of your screen:
 
-- Click the **grass block**, the **Minecraftly icon** by the clock, or press **Alt+B** anywhere, to open or close Book & Quill.
+- Click the **grass block**, the **Minecraftly icon** by the clock, or press **Alt+E** anywhere to open your **hotbar**, a vertical bar rising from the grass block. Do it again to open the full **inventory** in the middle of the screen, and a third time to close it.
+- The hotbar has **+** at the top for a new note, your 9 hotbar slots, and an **expand** slot at the bottom that opens the full inventory. The full inventory has 27 storage slots, with the same 9 hotbar slots along the bottom.
+- Saved notes appear as books in the slots. **Hover** over one to see its name, **click** it to open it, **drag** it to another slot to move it (dropping it on another note swaps them), or **right-click** it to rename, export or throw it away. To throw a note away, drop it outside the inventory or press **Q** while hovering over it; **Undo** brings it back. In the hotbar, keys **1–9** open the note in that slot.
+- **Alt+B** opens the notebook directly.
 - The grass block stays out of screen recordings and screen sharing. It also steps aside while a fullscreen game, video or presentation is in front. To hide it entirely, right-click it and untick **Show grass block on screen**.
 - Each new note starts blank. An unfinished note stays put if you come back within 10 minutes. After that the book starts blank again, and the unfinished note is saved for you.
-- **Export** and **Done** unlock once you've written something. **Done** saves the note to your inventory and closes the book.
+- **Export** and **Done** unlock once you've written something. **Done** saves the note to your inventory and closes the book. A note you opened from the inventory is updated in its own slot. If all 36 slots are full, the note stays open until you make room.
 - Use the button in the book's top-right corner to **expand** it to the middle of the screen, and again to **minimize** it back to the corner.
 - Minecraftly **updates itself**: new versions download in the background and install the next time no tool is open.
 - **Can't see the icon?** Windows 11 hides new icons at first. Click the **^** arrow next to the clock and drag the icon onto the taskbar. Alternatively, turn Minecraftly on under **Settings → Personalization → Taskbar → Other system tray icons**.
@@ -66,13 +69,13 @@ The PC you release from gets the new version immediately: `npm run release` inst
 - `desktop/` holds the Electron shell:
   - `main.js`: app start-up, tray icon, hotkeys, Start with Windows.
   - `overlay.js`: the grass block.
+  - `inventory.js` and `inventory-ipc.js`: inventory storage (slots, moving, throwing away, renaming) and the actions the windows can call.
   - `updater.js`: automatic updates.
   - `panels.js` and `layout.js`: the pop-up windows and where they sit.
   - `chooser.js`: menus centered on the screen.
-  - `inventory.js`: the user's saved items.
   - `tools.js`: the **tool registry**.
   - `preload.js`: the `window.minecraftly` bridge for tool pages.
-- `tools/<id>/` holds one folder per tool, each a self-contained web page that also works in a plain browser. `tools/book-and-quill/` is the notebook.
+- `tools/<id>/` holds one folder per tool, each a self-contained web page. `tools/book-and-quill/` is the notebook, which also works in a plain browser. `tools/hotbar/` and `tools/inventory/` are the vertical bar and the full inventory, and `tools/shared/` holds their common slot code, styles and icons.
 - `build/installer.nsh` holds extra installer steps. The uninstaller uses them to remove the Start with Windows entry.
 - `scripts/` holds the here.now publishing scripts for the browser version.
 

@@ -1,15 +1,16 @@
 const { app, Tray, Menu, globalShortcut, nativeImage, ipcMain, dialog } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
-const { TOOLS, DEFAULT_TOOL } = require("./tools");
+const { TOOLS, DEFAULT_TOOL, toolById } = require("./tools");
 const { readState, updateState } = require("./state");
 const {
-  flags, createPanel, hideAnimated, toggle, setMode, panelFor, anyPanelVisible,
+  flags, createPanel, show, hideAnimated, hideById, toggle, setMode, panelFor, anyPanelVisible,
+  isVisible, justHiddenByBlur,
 } = require("./panels");
 const { createOverlay, setOverlayEnabled, isOverlayEnabled } = require("./overlay");
 const { startAutoUpdates } = require("./updater");
 const { choose } = require("./chooser");
-const { listItems, putItem } = require("./inventory");
+const { registerInventoryIpc } = require("./inventory-ipc");
 
 const APP_NAME = "Minecraftly";
 // Same options for reading and writing, so Windows matches its startup entry.
@@ -27,9 +28,24 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 // Every way of calling Minecraftly (desktop or Start-menu shortcut, tray icon, grass block,
-// Alt+B, menu) goes through summon(), so it behaves the same however it was called.
+// Alt+E / Alt+B, menu) goes through summon(), so it behaves the same however it was called.
 // Keep it that way when adding new entry points.
+// For a tool that expands (the bar): closed -> bar -> full inventory -> closed.
 function summon(tool) {
+  const bigger = tool.expandsTo && toolById(tool.expandsTo);
+  if (bigger) {
+    // A click on the tray icon closes the open bar/inventory (blur) just before it arrives.
+    const justClosed = justHiddenByBlur();
+    if (isVisible(tool.id) || justClosed === tool.id) {
+      show(bigger);
+      return;
+    }
+    if (isVisible(bigger.id)) {
+      hideById(bigger.id);
+      return;
+    }
+    if (justClosed === bigger.id) return;
+  }
   toggle(tool);
 }
 
@@ -79,8 +95,18 @@ ipcMain.on("panel:set-mode", (event, mode) => {
   if (panel && (mode === "expanded" || mode === "docked")) setMode(panel, mode);
 });
 
-ipcMain.handle("inventory:list", () => listItems());
-ipcMain.handle("inventory:put", (event, item) => putItem(item));
+// Open another tool from inside one (e.g. the bar's expand slot opens the full inventory).
+ipcMain.on("panel:show-tool", (event, id) => {
+  const tool = toolById(id);
+  if (tool) show(tool);
+});
+
+// The bar's window has see-through room for tooltips; clicks there go to whatever is below.
+ipcMain.on("panel:click-through", (event, on) => {
+  panelFor(event.sender)?.win.setIgnoreMouseEvents(Boolean(on), { forward: true });
+});
+
+registerInventoryIpc();
 
 function registerHotkeys() {
   const working = new Set();
@@ -95,7 +121,7 @@ function buildMenu(hotkeysWorking) {
   return Menu.buildFromTemplate([
     { label: `${APP_NAME} ${app.getVersion()}`, enabled: false },
     { type: "separator" },
-    ...TOOLS.map((tool) => ({
+    ...TOOLS.filter((tool) => tool.inMenu !== false).map((tool) => ({
       label: tool.label,
       accelerator: hotkeysWorking.has(tool) ? tool.hotkey : undefined,
       registerAccelerator: false,
@@ -142,7 +168,7 @@ function welcome(hotkeysWorking) {
     iconType: "info",
     title: `${APP_NAME} is ready`,
     content: `Click the grass block in the bottom-right corner or the ${APP_NAME} icon by the clock${hotkey} `
-      + "to open your tools.",
+      + "to open your inventory. Alt+B opens the notebook.",
   });
 }
 

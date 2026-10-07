@@ -452,6 +452,26 @@ body {
 [data-shell="overlay"] button,
 [data-shell="overlay"] .writing-area { -webkit-app-region: no-drag; }
 
+/* Short message over the book (e.g. "Your inventory is full") */
+.book-notice {
+  position: absolute;
+  z-index: 11;
+  top: 58%;
+  left: 50%;
+  max-width: 70%;
+  padding: 1% 1.6%;
+  border: 0.4cqw solid #2d0a6b;
+  background: rgb(16 0 16 / 94%);
+  color: #fff;
+  font: 400 clamp(11px, 2.6cqw, 22px)/1.3 "Minecraft", monospace;
+  text-align: center;
+  text-shadow: 0.3cqw 0.3cqw #3f3f3f;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.book-notice[hidden] { display: none; }
+
 /* Expand / minimize (desktop app only): stone button beside the book's top-right corner.
    The book art spans 18.2%-80.1% across and starts 2.6% down; the 27px icon art shows ~1:1 when docked. */
 .resize-toggle {

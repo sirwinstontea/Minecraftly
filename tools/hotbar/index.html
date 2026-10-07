@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hotbar</title>
+    <link rel="stylesheet" href="../shared/inventory.css" />
+    <style>
+      /* The window is the bar plus see-through room on its left for tooltips.
+         Geometry must match desktop/layout.js: 6px frame, 2 separators of 8px, 11 cells. */
+      body {
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+      }
+
+      .bar {
+        display: flex;
+        flex-direction: column;
+        padding: 4px;
+      }
+
+      .separator { height: 8px; flex: none; }
+    </style>
+  </head>
+  <body>
+    <div class="bar mc-panel" role="toolbar" aria-label="Hotbar">
+      <div class="slot" data-action="new-note" title="New note (Alt+B)" role="button" aria-label="New note">
+        <img src="../shared/icons/plus.png" alt="" draggable="false" />
+      </div>
+      <div class="separator"></div>
+      <div class="slot" data-index="0"></div>
+      <div class="slot" data-index="1"></div>
+      <div class="slot" data-index="2"></div>
+      <div class="slot" data-index="3"></div>
+      <div class="slot" data-index="4"></div>
+      <div class="slot" data-index="5"></div>
+      <div class="slot" data-index="6"></div>
+      <div class="slot" data-index="7"></div>
+      <div class="slot" data-index="8"></div>
+      <div class="separator"></div>
+      <div class="slot" data-action="expand" title="Open inventory (Alt+E)" role="button" aria-label="Open inventory">
+        <img src="../shared/icons/expand.png" alt="" draggable="false" />
+      </div>
+    </div>
+    <script src="../shared/inventory.js"></script>
+    <script>
+      const sizeSlots = () => {
+        const slot = Math.floor((innerHeight - 28) / 11);
+        document.documentElement.style.setProperty("--slot", `${slot}px`);
+      };
+      sizeSlots();
+      addEventListener("resize", sizeSlots);
+
+      InventoryUI.mount({
+        panel: document.querySelector(".bar"),
+        clickThrough: true,
+        // 1-9 open the item in that hotbar slot, like picking a slot in Minecraft.
+        onKey: (event, itemAt) => {
+          if (!/^[1-9]$/.test(event.key)) return;
+          const item = itemAt(Number(event.key) - 1);
+          if (item) window.minecraftly.inventory.open(item.id);
+        },
+      });
+    </script>
+  </body>
+</html>
