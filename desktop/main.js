@@ -1,4 +1,6 @@
-const { app, Tray, Menu, globalShortcut, nativeImage, ipcMain, dialog } = require("electron");
+const {
+  app, Tray, Menu, globalShortcut, nativeImage, ipcMain, dialog, shell,
+} = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { TOOLS, DEFAULT_TOOL, toolById } = require("./tools");
@@ -11,6 +13,7 @@ const { createOverlay, setOverlayEnabled, isOverlayEnabled } = require("./overla
 const { startAutoUpdates } = require("./updater");
 const { choose } = require("./chooser");
 const { registerInventoryIpc } = require("./inventory-ipc");
+const { startHighlighter, HIGHLIGHT_HOTKEY } = require("./highlights/router");
 
 const APP_NAME = "Minecraftly";
 // Same options for reading and writing, so Windows matches its startup entry.
@@ -127,6 +130,13 @@ function buildMenu(hotkeysWorking) {
       registerAccelerator: false,
       click: () => summon(tool),
     })),
+    {
+      label: highlighterReady ? "Highlight selected text" : `${HIGHLIGHT_HOTKEY} is used by another app`,
+      accelerator: highlighterReady ? HIGHLIGHT_HOTKEY : undefined,
+      registerAccelerator: false,
+      enabled: false,
+    },
+    { label: "Get the browser highlighter…", click: () => shell.openExternal(EXTENSION_PAGE) },
     { type: "separator" },
     {
       label: "Show grass block on screen",
@@ -149,6 +159,9 @@ function buildMenu(hotkeysWorking) {
 }
 
 let menuHotkeys = new Set();
+let highlighterReady = false;
+// Until the extension is in the Chrome Web Store / Edge Add-ons, it is installed from GitHub.
+const EXTENSION_PAGE = "https://github.com/sirwinstontea/Minecraftly#browser-highlighter";
 function refreshMenu() {
   tray?.setContextMenu(buildMenu(menuHotkeys));
 }
@@ -190,6 +203,7 @@ function start() {
   });
   for (const tool of TOOLS) createPanel(tool);
   const hotkeysWorking = registerHotkeys();
+  highlighterReady = startHighlighter();
   createTray(hotkeysWorking);
   startAutoUpdates({ isIdle: () => !anyPanelVisible() && !flags.suppressHide });
 

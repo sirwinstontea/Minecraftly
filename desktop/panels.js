@@ -114,7 +114,8 @@ async function show(tool, intent = null) {
   for (const other of panels.values()) if (other !== panel) hideAnimated(other);
   clearTimeout(panel.hideTimer);
   panel.hideTimer = undefined;
-  if (!panel.win.isVisible()) place(panel);
+  // Fixed-spot panels (bar, inventory) are always re-placed; docked ones keep where you dragged them.
+  if (!panel.win.isVisible() || panel.tool.placement === "hotbar" || panel.tool.placement === "center") place(panel);
   panel.shownAt = Date.now();
   panel.win.showInactive();
   panel.win.focus();

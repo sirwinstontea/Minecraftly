@@ -26,6 +26,15 @@ contextBridge.exposeInMainWorld("minecraftly", {
   // `intent` says why the panel opened, e.g. { type: "load", item } or { type: "new" }.
   onOpened: (callback) => ipcRenderer.on("panel:opened", (event, intent) => callback(intent)),
   onClosing: (callback) => ipcRenderer.on("panel:closing", () => callback()),
+  // Alt+Y while this panel is focused: callback(color) returns "created" | "removed" | "no-selection".
+  onHighlightRequest: (callback) => ipcRenderer.on("highlight:toggle", async (event, requestId, color) => {
+    let result = "unsupported";
+    try {
+      result = await callback(color);
+    } finally {
+      ipcRenderer.send("highlight:result", requestId, result);
+    }
+  }),
   // "expanded" = big and centered on screen, "docked" = default corner spot.
   setMode: (mode) => ipcRenderer.send("panel:set-mode", mode),
   onMode: (callback) => ipcRenderer.on("panel:mode", (event, mode) => callback(mode)),

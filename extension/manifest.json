@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Minecraftly Highlighter",
+  "version": "0.1.0",
+  "description": "Permanent highlights on any web page: select text and press Alt+Y. Works with the free Minecraftly desktop app.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu/1RaWxlr5H0CkLHLNBQWDJBY3M1z4mhL5cC1qFtdj4vRIjlrUC+ZPK1iS/W2SRrOz3+NgObZxQSklfTvRme6f5oYdvoWyl3DM7nu7HUhk+iRrTEOjSTMUf5aW/bsKpYYt+WY1wgxdI5+CEU0pWMcTMXEUPLZxCgy4hbHyDTTWPVkDCxGY1RGp4j06yS0VeRem/5NOodvwYZvNFw5cMD8ojskqXZXHOTPrXgkSqy7JHgf1AcQcRLxpW92zrzpV6MgekqrybTNBz2Zcgv/eklBIA9xfiIt3RNrQwSSyVdzpQNzEJ1hNoqJ2BftcNWrTaBjudg5cadpSJarrcXJ+DgpQIDAQAB",
+  "minimum_chrome_version": "105",
+  "permissions": ["nativeMessaging", "contextMenus"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["anchor.js", "content.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Minecraftly Highlighter: select text and press Alt+Y",
+    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" }
+  }
+}

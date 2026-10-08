@@ -37,18 +37,29 @@
   });
   scene.append(measure);
 
-  function appendRun(runs, text, bold = false, italic = false) {
+  // A run is a piece of text with one format: bold, italic, and an optional highlight color.
+  function appendRun(runs, text, bold = false, italic = false, highlight = null) {
     if (!text) return;
     const last = runs[runs.length - 1];
-    if (last && last.bold === bold && last.italic === italic) last.text += text;
-    else runs.push({ text, bold, italic });
+    if (last && last.bold === bold && last.italic === italic && (last.highlight ?? null) === highlight) {
+      last.text += text;
+      return;
+    }
+    const run = { text, bold, italic };
+    if (highlight) run.highlight = highlight;
+    runs.push(run);
+  }
+
+  const HIGHLIGHT_COLORS = ["yellow", "green", "blue", "pink"];
+  function highlightOf(run) {
+    return HIGHLIGHT_COLORS.includes(run?.highlight) ? run.highlight : null;
   }
 
   function normalizeRuns(runs) {
     const result = [];
     for (const run of runs || []) {
       if (run && typeof run.text === "string") {
-        appendRun(result, run.text, Boolean(run.bold), Boolean(run.italic));
+        appendRun(result, run.text, Boolean(run.bold), Boolean(run.italic), highlightOf(run));
       }
     }
     return result;
@@ -65,7 +76,7 @@
   function joinRuns(...lists) {
     const result = [];
     for (const list of lists) {
-      for (const run of list) appendRun(result, run.text, run.bold, run.italic);
+      for (const run of list) appendRun(result, run.text, run.bold, run.italic, highlightOf(run));
     }
     return result;
   }
@@ -77,7 +88,7 @@
       const next = position + run.text.length;
       const from = Math.max(0, start - position);
       const to = Math.min(run.text.length, end - position);
-      if (to > from) appendRun(result, run.text.slice(from, to), run.bold, run.italic);
+      if (to > from) appendRun(result, run.text.slice(from, to), run.bold, run.italic, highlightOf(run));
       position = next;
       if (position >= end) break;
     }
@@ -93,7 +104,10 @@
       const classes = ["text-run"];
       if (run.bold) classes.push("is-bold");
       if (run.italic) classes.push("is-italic");
-      return `<span class="${classes.join(" ")}">${escapeText(run.text)}</span>`;
+      const highlight = highlightOf(run);
+      if (highlight) classes.push("is-highlight");
+      const data = highlight ? ` data-highlight="${highlight}"` : "";
+      return `<span class="${classes.join(" ")}"${data}>${escapeText(run.text)}</span>`;
     }).join("");
   }
 
@@ -101,16 +115,16 @@
     const runs = [];
     let topLevelBlocks = 0;
 
-    function visit(node, bold = false, italic = false, insideBlock = false) {
+    function visit(node, bold = false, italic = false, insideBlock = false, highlight = null) {
       if (node.nodeType === Node.TEXT_NODE) {
-        appendRun(runs, node.nodeValue || "", bold, italic);
+        appendRun(runs, node.nodeValue || "", bold, italic, highlight);
         return;
       }
       if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return;
 
       if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") {
         if (node.dataset.pad) return;
-        appendRun(runs, "\n", bold, italic);
+        appendRun(runs, "\n", bold, italic, highlight);
         return;
       }
 
@@ -125,9 +139,11 @@
         || node.classList?.contains("is-italic") || style?.fontStyle === "italic";
       if (weight) nextBold = weight === "bold" || Number.parseInt(weight, 10) >= 600;
       if (style?.fontStyle) nextItalic = style.fontStyle === "italic";
+      const marked = node.dataset?.highlight;
+      const nextHighlight = HIGHLIGHT_COLORS.includes(marked) ? marked : highlight;
 
       if (block && !insideBlock) {
-        if (topLevelBlocks > 0 || runs.length > 0) appendRun(runs, "\n", bold, italic);
+        if (topLevelBlocks > 0 || runs.length > 0) appendRun(runs, "\n", bold, italic, highlight);
         topLevelBlocks += 1;
       }
 
@@ -135,7 +151,7 @@
       const emptyBlockPlaceholder = block && children.length === 1
         && children[0].nodeType === Node.ELEMENT_NODE && children[0].tagName === "BR";
       if (!emptyBlockPlaceholder) {
-        for (const child of children) visit(child, nextBold, nextItalic, insideBlock || block);
+        for (const child of children) visit(child, nextBold, nextItalic, insideBlock || block, nextHighlight);
       }
     }
 
@@ -286,7 +302,10 @@
       const marker = run.bold && run.italic ? "***"
         : run.bold ? "**"
           : run.italic ? "*" : "";
-      return `${marker}${run.text}${marker}`;
+      const text = `${marker}${run.text}${marker}`;
+      if (!highlightOf(run)) return text;
+      // ==highlight== doesn't span lines in Markdown, so mark each line on its own.
+      return text.split("\n").map((line) => (line.trim() ? `==${line}==` : line)).join("\n");
     }).join("");
   }
 
@@ -302,6 +321,7 @@
       ...(run.italic ? ["<w:i/>"] : []),
       '<w:color w:val="17140D"/>',
       '<w:sz w:val="24"/>',
+      ...(highlightOf(run) ? [`<w:highlight w:val="${{ yellow: "yellow", green: "green", blue: "cyan", pink: "magenta" }[highlightOf(run)]}"/>`] : []),
     ].join("");
     return `<w:r><w:rPr>${properties}</w:rPr><w:t xml:space="preserve">${escapeXml(run.text)}</w:t></w:r>`;
   }
@@ -834,6 +854,63 @@
     renderPage({ focus: true, caretOffset: lengthOf(pages[currentPage]) });
   }
 
+  // Highlighted stretches of the whole note: [{ start, end, color }].
+  function highlightSpans(runs) {
+    const spans = [];
+    let position = 0;
+    for (const run of runs) {
+      const color = highlightOf(run);
+      const end = position + run.text.length;
+      const last = spans[spans.length - 1];
+      if (color && last && last.end === position && last.color === color) last.end = end;
+      else if (color) spans.push({ start: position, end, color });
+      position = end;
+    }
+    return spans;
+  }
+
+  function setHighlight(runs, start, end, color) {
+    const middle = sliceRuns(runs, start, end).map((run) => ({ ...run, highlight: color || undefined }));
+    return joinRuns(sliceRuns(runs, 0, start), normalizeRuns(middle), sliceRuns(runs, end));
+  }
+
+  // Alt+Y: highlight the selection; on (or inside) an existing highlight, remove that highlight.
+  // Overlapping highlights merge into one. Returns "created" | "removed" | "no-selection".
+  function toggleHighlight(color = "yellow") {
+    if (document.activeElement !== editor) return "no-selection";
+    const { anchor, focus } = selectionOffsets();
+    const base = pageStart(currentPage);
+    const from = base + Math.min(anchor, focus);
+    const to = base + Math.max(anchor, focus);
+    const runs = documentRuns();
+    const spans = highlightSpans(runs);
+    let next;
+    let result;
+    if (from === to) {
+      const span = spans.find((entry) => entry.start <= from && from <= entry.end);
+      if (!span) return "no-selection";
+      next = setHighlight(runs, span.start, span.end, null);
+      result = "removed";
+    } else {
+      if (!textOf(runs).slice(from, to).trim()) return "no-selection";
+      const overlapping = spans.filter((entry) => entry.start < to && entry.end > from);
+      const container = overlapping.find((entry) => entry.start <= from && to <= entry.end);
+      if (container) {
+        next = setHighlight(runs, container.start, container.end, null);
+        result = "removed";
+      } else {
+        const start = Math.min(from, ...overlapping.map((entry) => entry.start));
+        const end = Math.max(to, ...overlapping.map((entry) => entry.end));
+        next = setHighlight(runs, start, end, color);
+        result = "created";
+      }
+    }
+    pages = paginate(next, manualBreaks);
+    renderPage({ focus: true, caretOffset: Math.max(0, to - base) });
+    scheduleSave();
+    return result;
+  }
+
   editor.addEventListener("input", onInput);
   editor.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && !event.altKey) {
@@ -843,6 +920,11 @@
         document.execCommand(key === "b" ? "bold" : "italic", false);
         onInput();
       }
+    }
+    // In the desktop app Alt+Y is a Minecraftly-wide shortcut; in a plain browser handle it here.
+    if (!shell && event.altKey && !event.ctrlKey && event.key.toLowerCase() === "y") {
+      event.preventDefault();
+      toggleHighlight();
     }
   });
   editor.addEventListener("keyup", scheduleCaretRefresh);
@@ -954,6 +1036,9 @@
     const dragStrip = document.createElement("div");
     dragStrip.className = "drag-strip";
     scene.append(dragStrip);
+
+    // Alt+Y (a Minecraftly-wide shortcut) while this note is focused.
+    shell.onHighlightRequest((color) => toggleHighlight(color));
 
     // Opened plainly (Alt+B), for a new note (the + slot), or with a saved note from a slot.
     shell.onOpened(async (intent) => {

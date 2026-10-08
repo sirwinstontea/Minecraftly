@@ -1,95 +1,84 @@
+<p align="center"><img src="docs/images/banner.png" alt="Minecraftly: Minecraft-inspired tools for your Windows desktop" width="100%"></p>
+
 # Minecraftly
 
-Minecraft-style desktop tools that pop up from the Windows taskbar. The first tool is **Book & Quill**, a notebook with paginated pages, Minecraft fonts, and PDF, DOCX, and Markdown export.
+**Minecraft-inspired tools for your Windows desktop.** A little grass block sits in the corner of your screen. Click it, or press **Alt+E**, to open a hotbar and inventory full of your notes. Write in a pixel-art **Book & Quill** notebook, and press **Alt+Y** to put a permanent yellow highlight on text in your notes or on any web page.
+
+> **Unofficial fan project.** NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
+
+[![Download for Windows](https://img.shields.io/badge/Download-Windows%2010%2F11-5da03a?style=for-the-badge&logo=windows)](https://github.com/sirwinstontea/Minecraftly/releases/latest/download/Minecraftly-Setup.exe)
+[![Latest release](https://img.shields.io/github/v/release/sirwinstontea/Minecraftly?style=for-the-badge&color=86603f)](https://github.com/sirwinstontea/Minecraftly/releases)
+
+## Features
+
+| | |
+|---|---|
+| **Pop-up notebook** (Alt+B) | Book & Quill: a pixel-art notebook with pages, bold and italic text, highlights, and export to PDF, Word (.docx) and Markdown. Exported files are named after what you wrote. |
+| **Hotbar & inventory** (Alt+E) | Your notes sit in Minecraft-style slots. Hover to see a note's name, click to open it, drag to rearrange, right-click to rename or export, and drop a note outside the inventory to throw it away (Undo brings it back). |
+| **Highlighter** (Alt+Y) | Select text and press Alt+Y. The highlight stays on that exact text every time you come back, even after small edits to the page. It works in Book & Quill and on websites in Chrome and Edge (with the free extension). |
+| **Always at hand** | The grass block in the corner opens it. It's hidden in screen recordings and steps aside for fullscreen games and videos. |
+| **Private** | Notes and highlights stay on your PC. No account, no cloud. |
+| **Auto-updates** | New versions install themselves in the background. |
+
+<p align="center">
+  <img src="docs/images/inventory.png" alt="The inventory with notes in its slots" width="49%">
+  <img src="docs/images/web-highlights.png" alt="Permanent highlights on a web page" width="49%">
+</p>
 
 ## Download
 
-**[⬇ Download Minecraftly for Windows](https://github.com/sirwinstontea/Minecraftly/releases/latest/download/Minecraftly-Setup.exe)** (Windows 10/11, 64-bit)
+**[Download Minecraftly-Setup.exe](https://github.com/sirwinstontea/Minecraftly/releases/latest/download/Minecraftly-Setup.exe)** (Windows 10/11, 64-bit), then double-click it.
 
-Or download and start the installer from a terminal:
+Or install from a terminal:
 
-**PowerShell**
 ```powershell
 $f = "$env:TEMP\Minecraftly-Setup.exe"; Invoke-WebRequest "https://github.com/sirwinstontea/Minecraftly/releases/latest/download/Minecraftly-Setup.exe" -OutFile $f; Start-Process $f
 ```
 
-**Command Prompt**
-```bat
-curl -L -o "%TEMP%\Minecraftly-Setup.exe" https://github.com/sirwinstontea/Minecraftly/releases/latest/download/Minecraftly-Setup.exe && start "" "%TEMP%\Minecraftly-Setup.exe"
-```
+The installer isn't code-signed yet. If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**.
 
-All versions are listed on the [Releases page](https://github.com/sirwinstontea/Minecraftly/releases).
+### Browser highlighter
 
-## Install (Windows)
+1. Download **[minecraftly-highlighter.zip](https://github.com/sirwinstontea/Minecraftly/releases/latest/download/minecraftly-highlighter.zip)** and unzip it.
+2. Open `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the unzipped folder.
 
-Run `Minecraftly-Setup.exe` by double-clicking it in File Explorer; don't open it in a browser tab. The installer isn't code-signed yet, so Windows SmartScreen may show **"Windows protected your PC"**. If it does, click **More info → Run anyway**.
+The extension needs the Minecraftly app running; it keeps your highlights there. A Chrome Web Store and Edge Add-ons listing is planned.
 
-After installing, Minecraftly starts with Windows and shows a **grass block** in the bottom-right corner of your screen:
+## Shortcuts
 
-- Click the **grass block**, the **Minecraftly icon** by the clock, or press **Alt+E** anywhere to open your **hotbar**, a vertical bar rising from the grass block. Do it again to open the full **inventory** in the middle of the screen, and a third time to close it.
-- The hotbar has **+** at the top for a new note, your 9 hotbar slots, and an **expand** slot at the bottom that opens the full inventory. The full inventory has 27 storage slots, with the same 9 hotbar slots along the bottom.
-- Saved notes appear as books in the slots. **Hover** over one to see its name, **click** it to open it, **drag** it to another slot to move it (dropping it on another note swaps them), or **right-click** it to rename, export or throw it away. To throw a note away, drop it outside the inventory or press **Q** while hovering over it; **Undo** brings it back. In the hotbar, keys **1–9** open the note in that slot.
-- **Alt+B** opens the notebook directly.
-- The grass block stays out of screen recordings and screen sharing. It also steps aside while a fullscreen game, video or presentation is in front. To hide it entirely, right-click it and untick **Show grass block on screen**.
-- Each new note starts blank. An unfinished note stays put if you come back within 10 minutes. After that the book starts blank again, and the unfinished note is saved for you.
-- **Export** and **Done** unlock once you've written something. **Done** saves the note to your inventory and closes the book. A note you opened from the inventory is updated in its own slot. If all 36 slots are full, the note stays open until you make room.
-- Use the button in the book's top-right corner to **expand** it to the middle of the screen, and again to **minimize** it back to the corner.
-- Minecraftly **updates itself**: new versions download in the background and install the next time no tool is open.
-- **Can't see the icon?** Windows 11 hides new icons at first. Click the **^** arrow next to the clock and drag the icon onto the taskbar. Alternatively, turn Minecraftly on under **Settings → Personalization → Taskbar → Other system tray icons**.
-- Click anywhere else or press **Esc** to tuck the tool away. **Done** saves and closes.
-- Drag the top edge of the book to move it. The position is remembered.
-- Right-click the icon to pick a tool, turn **Start with Windows** off, or quit.
+| Keys | What it does |
+|---|---|
+| **Alt+E** | Open the hotbar. Press again for the full inventory, and once more to close it. |
+| **Alt+B** | Open the notebook |
+| **Alt+Y** | Highlight the selected text, or remove the highlight under your cursor |
+| **1–9** | In the hotbar, open the note in that slot |
+| **Q** | Throw away the note under the mouse |
+| **Esc** | Close the open tool |
 
-Notes are saved automatically on this computer and are kept if you uninstall.
+## FAQ
 
-## Develop
+**Is this made by Mojang or Microsoft?** No. Minecraftly is an independent, unofficial project inspired by Minecraft's look.
 
-Install Node.js, open a terminal **in this folder**, and run:
+**Where are my notes?** In `%APPDATA%\Minecraftly` on your PC. They're kept when you uninstall.
 
-```sh
-npm install
-npm run desktop   # run the desktop app from source
-npm run dist      # build dist/Minecraftly-Setup.exe
-npm start         # Book & Quill in a browser at http://localhost:5600
-```
+**I can't see the grass block or the tray icon.** Windows 11 hides new tray icons at first. Click the **^** next to the clock and drag the Minecraftly icon onto the taskbar. To bring back the grass block, right-click the tray icon and choose **Show grass block on screen**.
 
-## Release a new version
+**Which apps can I highlight in?** Today: Book & Quill notes, and websites in Chrome and Edge with the extension. A PDF reader and support for Word, Firefox and other apps are on the [roadmap](docs/DEVELOPMENT.md#how-highlighting-works).
 
-Installed copies check this repo's GitHub Releases every few hours and update themselves. To ship a version:
+## Roadmap
 
-1. Bump `version` in `package.json`, for example `1.1.0` → `1.2.0`.
-2. Run `npm run release`. This builds the installer and publishes `Minecraftly-Setup.exe`, its `.blockmap` and `latest.yml` as release `v<version>`. You need the GitHub CLI logged in to an account that can push to the repo.
+- [x] Book & Quill notebook with PDF, DOCX and Markdown export
+- [x] Hotbar and 36-slot inventory
+- [x] Permanent highlights in notes and on web pages
+- [ ] Minecraftly PDF reader with highlights
+- [ ] Highlights in Word, Firefox and more apps
+- [ ] More tools in the hotbar
 
-Auto-updates need the release files to be publicly downloadable, so they only reach users while the repo is public.
+## Contributing
 
-The PC you release from gets the new version immediately: `npm run release` installs it there silently and restarts it in the tray. To pull the latest release onto your own PC at any other time, run `npm run install-local`.
+Ideas and bug reports are welcome in [Issues](https://github.com/sirwinstontea/Minecraftly/issues). To run it from source, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-## Project layout
+---
 
-- `desktop/` holds the Electron shell:
-  - `main.js`: app start-up, tray icon, hotkeys, Start with Windows.
-  - `overlay.js`: the grass block.
-  - `inventory.js` and `inventory-ipc.js`: inventory storage (slots, moving, throwing away, renaming) and the actions the windows can call.
-  - `updater.js`: automatic updates.
-  - `panels.js` and `layout.js`: the pop-up windows and where they sit.
-  - `chooser.js`: menus centered on the screen.
-  - `tools.js`: the **tool registry**.
-  - `preload.js`: the `window.minecraftly` bridge for tool pages.
-- `tools/<id>/` holds one folder per tool, each a self-contained web page. `tools/book-and-quill/` is the notebook, which also works in a plain browser. `tools/hotbar/` and `tools/inventory/` are the vertical bar and the full inventory, and `tools/shared/` holds their common slot code, styles and icons.
-- `build/installer.nsh` holds extra installer steps. The uninstaller uses them to remove the Start with Windows entry.
-- `scripts/` holds the here.now publishing scripts for the browser version.
-
-### Adding a tool
-
-1. Create `tools/<id>/index.html`, a page with transparent margins.
-2. Add `{ id, label, hotkey, width, height }` to `desktop/tools.js`.
-3. Optionally use `window.minecraftly` when it exists:
-   - `hide()`, `onOpened(cb)` and `onClosing(cb)` control and follow the panel.
-   - `setMode("expanded" | "docked")` and `onMode(cb)` handle expand and minimize.
-   - `choose(title, options)` shows a menu centered on the screen.
-   - `exportPdf(name)` saves the page as a PDF.
-   - `inventory.list()` and `inventory.put(item)` read and add to the user's saved items. Book & Quill files notes there with `type: "note"`.
-
-## Publish with here.now
-
-Authenticate with here.now on this computer, then run `npm run publish` to publish Book & Quill to the web. Run `npm run watch` to publish future changes automatically. The scripts create `.herenow/` locally for site metadata; that folder is git-ignored.
+<sub>Minecraftly is a fan-made project inspired by Minecraft. "Minecraft" is a trademark of Mojang Synergies AB. Minecraftly is not affiliated with, endorsed by, or sponsored by Mojang or Microsoft.</sub>

@@ -14,9 +14,12 @@ const { version } = JSON.parse(fs.readFileSync(path.join(root, "package.json"), 
 const tag = `v${version}`;
 const run = (command, args, shell = false) => execFileSync(command, args, { cwd: root, stdio: "inherit", shell });
 
-const assets = ["Minecraftly-Setup.exe", "Minecraftly-Setup.exe.blockmap", "latest.yml"].map((name) => path.join("dist", name));
+const assets = ["Minecraftly-Setup.exe", "Minecraftly-Setup.exe.blockmap", "latest.yml", "minecraftly-highlighter.zip"]
+  .map((name) => path.join("dist", name));
 
-run("npm", ["run", "dist"], true); // npm is a .cmd script on Windows, so it needs a shell
+run("npm", ["test"], true); // npm is a .cmd script on Windows, so it needs a shell
+run("npm", ["run", "dist"], true);
+run("node", [path.join(__dirname, "build-extension.cjs")]);
 for (const asset of assets) {
   if (!fs.existsSync(path.join(root, asset))) throw new Error(`Build output missing: ${asset}`);
 }

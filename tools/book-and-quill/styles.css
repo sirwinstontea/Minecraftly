@@ -129,6 +129,16 @@ body {
 .text-run.is-bold { font-weight: 700; }
 .text-run.is-italic { font-style: italic; }
 
+/* Highlighter (Alt+Y). Kept in prints/PDFs too. */
+.text-run.is-highlight {
+  background: #ffe45c;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.text-run.is-highlight[data-highlight="green"] { background: #9be67a; }
+.text-run.is-highlight[data-highlight="blue"] { background: #8fd3ff; }
+.text-run.is-highlight[data-highlight="pink"] { background: #ffa3d1; }
+
 .underscore-caret {
   position: absolute;
   z-index: 2;

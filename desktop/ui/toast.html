@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Minecraftly</title>
+    <style>
+      @font-face {
+        font-family: "Minecraft";
+        src: url("Minecraft-Regular.otf") format("opentype");
+      }
+
+      html, body {
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+      }
+
+      .toast {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        max-width: 360px;
+        padding: 6px 10px 5px;
+        border: 2px solid #2d0a6b;
+        background: rgb(16 0 16 / 94%);
+        color: #fff;
+        font: 400 15px/1.2 "Minecraft", monospace;
+        text-shadow: 2px 2px #3f3f3f;
+        white-space: nowrap;
+      }
+
+      .swatch {
+        width: 10px;
+        height: 10px;
+        flex: none;
+        border: 2px solid #000;
+        background: #ffe45c;
+      }
+
+      .toast.is-info .swatch { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="toast"><span class="swatch"></span><span class="text"></span></div>
+    <script>
+      const toast = document.querySelector(".toast");
+      window.showToast = (text, info) => {
+        toast.querySelector(".text").textContent = text;
+        toast.classList.toggle("is-info", Boolean(info));
+        const { width, height } = toast.getBoundingClientRect();
+        return { width: Math.ceil(width), height: Math.ceil(height) };
+      };
+    </script>
+  </body>
+</html>
