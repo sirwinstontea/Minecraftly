@@ -3,7 +3,7 @@
 // swap), drop outside the panel or press Q to throw away (with Undo), right-click menu.
 (() => {
   const api = window.minecraftly;
-  const ICONS = { note: "../shared/icons/written-book.png" };
+  const ICONS = { note: "../shared/icons/book-and-quill.png" };
   const DRAG_THRESHOLD = 5;
 
   function formatDate(iso) {
