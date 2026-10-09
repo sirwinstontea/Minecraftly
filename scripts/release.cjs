@@ -17,13 +17,19 @@ const run = (command, args, shell = false) => execFileSync(command, args, { cwd:
 const assets = ["Minecraftly-Setup.exe", "Minecraftly-Setup.exe.blockmap", "latest.yml", "minecraftly-highlighter.zip"]
   .map((name) => path.join("dist", name));
 
+// Release exactly what's committed and pushed, and tag that commit (not whatever main points to).
+const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+if (git("status", "--porcelain")) throw new Error("Commit (and push) your changes before releasing.");
+const commit = git("rev-parse", "HEAD");
+if (!git("ls-remote", "origin", "HEAD").startsWith(commit)) throw new Error("Push your commits before releasing.");
+
 run("npm", ["test"], true); // npm is a .cmd script on Windows, so it needs a shell
 run("npm", ["run", "dist"], true);
 run("node", [path.join(__dirname, "build-extension.cjs")]);
 for (const asset of assets) {
   if (!fs.existsSync(path.join(root, asset))) throw new Error(`Build output missing: ${asset}`);
 }
-run("gh", ["release", "create", tag, ...assets, "--title", `Minecraftly ${version}`, "--generate-notes", "--latest"]);
+run("gh", ["release", "create", tag, ...assets, "--target", commit, "--title", `Minecraftly ${version}`, "--generate-notes", "--latest"]);
 console.log(`Released ${tag}. Installed copies will update within a few hours.`);
 
 // This PC gets the new version immediately (the one that just shipped).
