@@ -4,7 +4,7 @@ const path = require("node:path");
 const { foregroundContext } = require("./highlights/foreground");
 const { onFullscreenChange, isFullscreen } = require("./fullscreen");
 const { anyPanelVisible, panelEvents } = require("./panels");
-const { MARGIN } = require("./layout");
+const { MARGIN, overlayBounds } = require("./layout");
 const { putItem } = require("./inventory");
 const { broadcast } = require("./inventory-ipc");
 
@@ -53,18 +53,30 @@ function area() {
   return screen.getPrimaryDisplay().workArea;
 }
 
-// The sign's box: remembered position/size, kept on screen; default top right of the main screen.
+// The sign always hugs the right edge of the main screen; it only slides up and down, from the
+// top down to just above the grass block (never over it, never toward the middle).
+function verticalRange(work = area()) {
+  return { top: work.y + MARGIN, bottom: overlayBounds().y - MARGIN - MIN_HEIGHT };
+}
+
+function clampY(y, work = area()) {
+  const { top, bottom } = verticalRange(work);
+  return Math.round(Math.min(Math.max(y, top), Math.max(top, bottom)));
+}
+
+function rightAlignedX(width, work = area()) {
+  return work.x + work.width - width - MARGIN;
+}
+
+// The sign's box: remembered height on the right edge and size; default top right.
 function box() {
   const work = area();
-  const maxHeight = Math.round(work.height * 0.5);
   const saved = state.box || {};
   const width = Math.min(Math.max(saved.width || DEFAULT_WIDTH, MIN_WIDTH), work.width - 2 * MARGIN);
-  const limit = Math.min(Math.max(saved.maxHeight || maxHeight, MIN_HEIGHT), work.height - 2 * MARGIN);
-  let x = Number.isInteger(saved.x) ? saved.x : work.x + work.width - width - MARGIN;
-  let y = Number.isInteger(saved.y) ? saved.y : work.y + MARGIN;
-  x = Math.min(Math.max(x, work.x), work.x + work.width - width);
-  y = Math.min(Math.max(y, work.y), work.y + work.height - ICON);
-  return { x, y, width, maxHeight: limit };
+  const y = clampY(Number.isInteger(saved.y) ? saved.y : work.y + MARGIN, work);
+  const room = overlayBounds().y - MARGIN - y; // down to just above the grass block
+  const limit = Math.min(Math.max(saved.maxHeight || Math.round(work.height * 0.5), MIN_HEIGHT), Math.max(MIN_HEIGHT, room));
+  return { x: rightAlignedX(width, work), y, width, maxHeight: limit };
 }
 
 function expandedBounds() {
@@ -196,21 +208,24 @@ function createTodo() {
     peek = false;
     if (context !== "desktop") apply();
   });
-  // Moving (drag the top strip) and resizing (corner handle) are done by the page, which
-  // reports the new box; the window follows directly.
+  // Moving (the sign's top strip or the icon) and resizing (corner handle) are tracked by the
+  // page, which reports where the pointer wants the box; the window follows directly. Moving
+  // only ever changes the height on the right edge: sideways movement is ignored.
   ipc.on("todo:drag", (event, phase, rect) => {
     dragging = phase !== "end";
     if (rect) {
       const work = area();
-      const width = Math.max(MIN_WIDTH, Math.round(rect.width));
-      const height = Math.max(MIN_HEIGHT, Math.round(rect.height));
-      win.setBounds({ x: Math.round(rect.x), y: Math.round(rect.y), width, height });
-      state.box = {
-        x: Math.round(rect.x),
-        y: Math.round(rect.y),
-        width,
-        maxHeight: rect.resized ? Math.min(height, work.height) : (state.box?.maxHeight ?? null),
-      };
+      const y = clampY(rect.y, work);
+      if (rect.icon) {
+        state.box = { ...state.box, y };
+        win.setBounds(collapsedBounds());
+      } else {
+        const width = Math.min(Math.max(MIN_WIDTH, Math.round(rect.width)), work.width - 2 * MARGIN);
+        const room = overlayBounds().y - MARGIN - y;
+        const height = Math.min(Math.max(MIN_HEIGHT, Math.round(rect.height)), Math.max(MIN_HEIGHT, room));
+        win.setBounds({ x: rightAlignedX(width, work), y, width, height });
+        state.box = { ...state.box, y, width, maxHeight: rect.resized ? height : (state.box?.maxHeight ?? null) };
+      }
     }
     if (!dragging) {
       save();

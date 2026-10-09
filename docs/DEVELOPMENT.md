@@ -34,6 +34,7 @@ Auto-updates only reach users while the release files are publicly downloadable,
   - `todo.js`, `ui/todo.html` and `ui/todo-page.js`: the to-do sign.
     - It's fully open while the desktop is showing; `foregroundContext()` in `highlights/foreground.js` checks this 4× a second.
     - Over other apps it shrinks to an icon, and it collapses whenever a tool panel opens (`panelEvents`).
+    - It only slides up and down the right edge, from the top to just above the grass block.
     - It's saved in `todo.json`.
   - `fullscreen.js`: tells the grass block and to-do sign when a fullscreen app is in front.
   - `inventory.js` and `inventory-ipc.js`: the inventory (slots, moving, throwing away, renaming).

@@ -30,6 +30,7 @@
         border: 0;
         background: transparent;
         cursor: pointer;
+        touch-action: none;
       }
 
       .icon img {
@@ -71,12 +72,11 @@
         background: rgb(59 42 23 / 22%);
         color: #2b1d0e;
         font-size: 14px;
-        cursor: grab;
+        cursor: ns-resize; /* it only moves up and down the right edge */
       }
 
       .top img { width: 16px; height: 16px; image-rendering: pixelated; pointer-events: none; }
       .top .title { flex: 1; pointer-events: none; }
-      .top:active { cursor: grabbing; }
 
       .lines {
         flex: 1;
@@ -159,11 +159,11 @@
     </style>
   </head>
   <body class="is-collapsed">
-    <button class="icon" type="button" title="To-do list (Alt+T hides it)" aria-label="Open to-do list">
+    <button class="icon" type="button" title="To-do list: click to open, drag up or down to move (Alt+T hides it)" aria-label="Open to-do list">
       <img src="../../tools/shared/icons/oak-sign.png" alt="" draggable="false" />
     </button>
     <section class="sign" aria-label="To-do list">
-      <div class="top" title="Drag to move">
+      <div class="top" title="Drag up or down to move">
         <img src="../../tools/shared/icons/oak-sign.png" alt="" draggable="false" />
         <span class="title">To-do</span>
       </div>

@@ -269,7 +269,27 @@
   });
 
   // ---- icon, save button, modes -----------------------------------------------------------
-  document.querySelector(".icon").addEventListener("click", () => api.peek());
+  // The icon: a click opens the list; dragging it slides it up or down the right edge.
+  const icon = document.querySelector(".icon");
+  icon.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    const start = { x: event.screenX, y: event.screenY, wy: window.screenY };
+    let moved = false;
+    icon.setPointerCapture(event.pointerId);
+    const move = (e) => {
+      if (!moved && Math.abs(e.screenY - start.y) + Math.abs(e.screenX - start.x) < 5) return;
+      moved = true;
+      api.drag("move", { y: start.wy + (e.screenY - start.y), icon: true });
+    };
+    const up = (e) => {
+      icon.removeEventListener("pointermove", move);
+      icon.removeEventListener("pointerup", up);
+      if (moved) api.drag("end", { y: start.wy + (e.screenY - start.y), icon: true });
+      else api.peek();
+    };
+    icon.addEventListener("pointermove", move);
+    icon.addEventListener("pointerup", up);
+  });
 
   let statusTimer;
   document.querySelector(".save").addEventListener("click", async () => {
