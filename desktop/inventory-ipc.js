@@ -83,4 +83,4 @@ function registerInventoryIpc() {
   });
 }
 
-module.exports = { registerInventoryIpc };
+module.exports = { registerInventoryIpc, broadcast };

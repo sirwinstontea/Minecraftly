@@ -14,6 +14,16 @@ const { startAutoUpdates } = require("./updater");
 const { choose } = require("./chooser");
 const { registerInventoryIpc } = require("./inventory-ipc");
 const { startHighlighter, HIGHLIGHT_HOTKEY } = require("./highlights/router");
+const { createTodo, setTodoEnabled, isTodoEnabled, todoInUse } = require("./todo");
+const { maskAltMenu } = require("./highlights/foreground");
+
+const TODO_HOTKEY = "Alt+T";
+let todoHotkeyWorks = false;
+function toggleTodo() {
+  maskAltMenu();
+  setTodoEnabled(!isTodoEnabled());
+  refreshMenu();
+}
 
 const APP_NAME = "Minecraftly";
 // Same options for reading and writing, so Windows matches its startup entry.
@@ -114,7 +124,11 @@ registerInventoryIpc();
 function registerHotkeys() {
   const working = new Set();
   for (const tool of TOOLS) {
-    if (tool.hotkey && globalShortcut.register(tool.hotkey, () => summon(tool))) working.add(tool);
+    const pressed = () => {
+      maskAltMenu(); // so Word/Firefox don't open their menus when Alt is released
+      summon(tool);
+    };
+    if (tool.hotkey && globalShortcut.register(tool.hotkey, pressed)) working.add(tool);
   }
   return working;
 }
@@ -138,6 +152,14 @@ function buildMenu(hotkeysWorking) {
     },
     { label: "Get the browser highlighter…", click: () => shell.openExternal(EXTENSION_PAGE) },
     { type: "separator" },
+    {
+      label: todoHotkeyWorks ? "Show to-do list" : `Show to-do list (${TODO_HOTKEY} is used by another app)`,
+      type: "checkbox",
+      checked: isTodoEnabled(),
+      accelerator: todoHotkeyWorks ? TODO_HOTKEY : undefined,
+      registerAccelerator: false,
+      click: () => toggleTodo(),
+    },
     {
       label: "Show grass block on screen",
       type: "checkbox",
@@ -204,8 +226,10 @@ function start() {
   for (const tool of TOOLS) createPanel(tool);
   const hotkeysWorking = registerHotkeys();
   highlighterReady = startHighlighter();
+  createTodo();
+  todoHotkeyWorks = globalShortcut.register(TODO_HOTKEY, toggleTodo);
   createTray(hotkeysWorking);
-  startAutoUpdates({ isIdle: () => !anyPanelVisible() && !flags.suppressHide });
+  startAutoUpdates({ isIdle: () => !anyPanelVisible() && !flags.suppressHide && !todoInUse() });
 
   if (isQuietStart(process.argv)) return;
   summon(DEFAULT_TOOL);

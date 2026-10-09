@@ -31,6 +31,11 @@ Auto-updates only reach users while the release files are publicly downloadable,
   - `tools.js`: the **tool registry**.
   - `panels.js` and `layout.js`: the pop-up windows and where they sit.
   - `overlay.js`: the grass block in the screen corner.
+  - `todo.js`, `ui/todo.html` and `ui/todo-page.js`: the to-do sign.
+    - It's fully open while the desktop is showing; `foregroundContext()` in `highlights/foreground.js` checks this 4× a second.
+    - Over other apps it shrinks to an icon, and it collapses whenever a tool panel opens (`panelEvents`).
+    - It's saved in `todo.json`.
+  - `fullscreen.js`: tells the grass block and to-do sign when a fullscreen app is in front.
   - `inventory.js` and `inventory-ipc.js`: the inventory (slots, moving, throwing away, renaming).
   - `chooser.js`: menus centered on the screen.
   - `updater.js`: automatic updates.

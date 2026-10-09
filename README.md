@@ -2,7 +2,7 @@
 
 # Minecraftly
 
-**Minecraft-inspired tools for your Windows desktop.** A little grass block sits in the corner of your screen. Click it, or press **Alt+E**, to open a hotbar and inventory full of your notes. Write in a pixel-art **Book & Quill** notebook, and press **Alt+Y** to put a permanent yellow highlight on text in your notes or on any web page.
+**Minecraft-inspired tools for your Windows desktop.** A little grass block sits in the corner of your screen. Click it, or press **Alt+E**, to open a hotbar and inventory full of your notes. Write in a pixel-art **Book & Quill** notebook, keep your to-dos on an **oak sign** in the top-right corner, and press **Alt+Y** to put a permanent yellow highlight on text in your notes or on any web page.
 
 > **Unofficial fan project.** NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
 
@@ -16,6 +16,7 @@
 | **Pop-up notebook** (Alt+B) | Book & Quill: a pixel-art notebook with pages, bold and italic text, highlights, and export to PDF, Word (.docx) and Markdown. Exported files are named after what you wrote. |
 | **Hotbar & inventory** (Alt+E) | Your notes sit in Minecraft-style slots. Hover to see a note's name, click to open it, drag to rearrange, right-click to rename or export, and drop a note outside the inventory to throw it away (Undo brings it back). |
 | **Highlighter** (Alt+Y) | Select text and press Alt+Y. The highlight stays on that exact text every time you come back, even after small edits to the page. It works in Book & Quill and on websites in Chrome and Edge (with the free extension). |
+| **To-do sign** (Alt+T) | An oak sign in the top-right corner for your to-dos: one line per to-do. It opens fully while you're on the desktop and shrinks to a little sign icon over other apps; click the icon to type. You can drag to reorder lines, move and resize the sign, and save a copy to your inventory. |
 | **Always at hand** | The grass block in the corner opens it. It's hidden in screen recordings and steps aside for fullscreen games and videos. |
 | **Private** | Notes and highlights stay on your PC. No account, no cloud. |
 | **Auto-updates** | New versions install themselves in the background. |
@@ -52,6 +53,8 @@ The extension needs the Minecraftly app running; it keeps your highlights there.
 | **Alt+E** | Open the hotbar. Press again for the full inventory, and once more to close it. |
 | **Alt+B** | Open the notebook |
 | **Alt+Y** | Highlight the selected text, or remove the highlight under your cursor |
+| **Alt+T** | Hide or show the to-do sign |
+| **Alt+↑ / Alt+↓** | In the to-do sign, move the current line up or down |
 | **1–9** | In the hotbar, open the note in that slot |
 | **Q** | Throw away the note under the mouse |
 | **Esc** | Close the open tool |
@@ -71,6 +74,7 @@ The extension needs the Minecraftly app running; it keeps your highlights there.
 - [x] Book & Quill notebook with PDF, DOCX and Markdown export
 - [x] Hotbar and 36-slot inventory
 - [x] Permanent highlights in notes and on web pages
+- [x] Always-there to-do sign
 - [ ] Minecraftly PDF reader with highlights
 - [ ] Highlights in Word, Firefox and more apps
 - [ ] More tools in the hotbar

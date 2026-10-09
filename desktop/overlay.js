@@ -1,6 +1,7 @@
 const { BrowserWindow, screen } = require("electron");
 const path = require("node:path");
 const { overlayBounds } = require("./layout");
+const { onFullscreenChange } = require("./fullscreen");
 
 // The grass block that always sits in the bottom-right corner (like Wispr Flow's bar).
 // It never takes focus, is hidden from screen recordings and screen sharing,
@@ -60,28 +61,11 @@ function isOverlayEnabled() {
   return enabled;
 }
 
-// Windows reports when a fullscreen app (game, video, slideshow) is in front.
-// Uses a small prebuilt library (koffi); if it can't load, the block simply stays visible.
 function watchFullscreen() {
-  let query;
-  try {
-    const koffi = require("koffi");
-    query = koffi.load("shell32.dll").func("int __stdcall SHQueryUserNotificationState(_Out_ int *state)");
-  } catch {
-    return;
-  }
-  const BUSY = 2; // fullscreen app
-  const D3D_FULLSCREEN = 3; // fullscreen game
-  const PRESENTATION = 4;
-  setInterval(() => {
-    const state = [0];
-    if (query(state) !== 0) return;
-    const next = [BUSY, D3D_FULLSCREEN, PRESENTATION].includes(state[0]);
-    if (next !== fullscreenActive) {
-      fullscreenActive = next;
-      refresh();
-    }
-  }, 1500);
+  onFullscreenChange((active) => {
+    fullscreenActive = active;
+    refresh();
+  });
 }
 
 module.exports = { createOverlay, setOverlayEnabled, isOverlayEnabled };

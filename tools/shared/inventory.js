@@ -3,7 +3,8 @@
 // swap), drop outside the panel or press Q to throw away (with Undo), right-click menu.
 (() => {
   const api = window.minecraftly;
-  const ICONS = { note: "../shared/icons/book-and-quill.png" };
+  const ICONS = { note: "../shared/icons/book-and-quill.png", todo: "../shared/icons/oak-sign.png" };
+  const iconFor = (item) => ICONS[item.variant] || ICONS[item.type] || ICONS.note;
   const DRAG_THRESHOLD = 5;
 
   function formatDate(iso) {
@@ -40,7 +41,7 @@
         slot.title = "";
         if (!item) continue;
         const img = document.createElement("img");
-        img.src = ICONS[item.type] || ICONS.note;
+        img.src = iconFor(item);
         img.alt = item.title || "Note";
         img.draggable = false;
         slot.append(img);
@@ -120,7 +121,7 @@
       if (!press || event.pointerId !== press.pointerId) return;
       const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y) > DRAG_THRESHOLD;
       if (!held && moved) {
-        held = Object.assign(document.createElement("img"), { className: "held", src: ICONS[press.item.type] || ICONS.note });
+        held = Object.assign(document.createElement("img"), { className: "held", src: iconFor(press.item) });
         document.body.append(held);
         press.slot.classList.add("is-source");
         tooltip.hidden = true;

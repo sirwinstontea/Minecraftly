@@ -4,7 +4,11 @@ const { readState, updateState } = require("./state");
 const { dockedBounds, expandedBounds, hotbarBounds, inventoryBounds } = require("./layout");
 const { isOverlayEnabled } = require("./overlay");
 
+const { EventEmitter } = require("node:events");
+
 const panels = new Map();
+// "shown" / "hidden" (tool id): lets the to-do sign get out of the way of open tools.
+const panelEvents = new EventEmitter();
 const flags = { quitting: false, suppressHide: false };
 let hiddenByBlur = { id: undefined, at: 0 };
 
@@ -120,6 +124,7 @@ async function show(tool, intent = null) {
   panel.win.showInactive();
   panel.win.focus();
   panel.win.webContents.send("panel:opened", intent);
+  panelEvents.emit("shown", tool.id);
 }
 
 function hideAnimated(panel, { byBlur = false } = {}) {
@@ -129,6 +134,7 @@ function hideAnimated(panel, { byBlur = false } = {}) {
   panel.hideTimer = setTimeout(() => {
     panel.hideTimer = undefined;
     panel.win.hide();
+    panelEvents.emit("hidden", panel.tool.id);
   }, 140);
 }
 
@@ -169,5 +175,5 @@ function allPanels() {
 
 module.exports = {
   flags, createPanel, show, hideAnimated, hideById, toggle, setMode, panelFor, anyPanelVisible,
-  isVisible, justHiddenByBlur, allPanels,
+  isVisible, justHiddenByBlur, allPanels, panelEvents,
 };

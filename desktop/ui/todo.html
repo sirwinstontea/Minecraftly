@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>To-do</title>
+    <style>
+      @font-face {
+        font-family: "Minecraft";
+        src: url("Minecraft-Regular.otf") format("opentype");
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+        font-family: "Minecraft", monospace;
+        user-select: none;
+      }
+
+      /* ---- collapsed: just the oak-sign icon ---- */
+      .icon {
+        display: none;
+        width: 100%;
+        height: 100%;
+        padding: 4px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .icon img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 2px 0 rgb(0 0 0 / 55%));
+        transition: transform 120ms steps(3, end);
+        pointer-events: none;
+      }
+
+      .icon:hover img { transform: translateY(-2px) scale(1.06); }
+      body.is-collapsed .icon { display: block; }
+      body.is-collapsed .sign { display: none; }
+
+      /* ---- expanded: the oak sign ---- */
+      .sign {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        border: 3px solid #3b2a17;
+        background: #b8945f url("../../tools/shared/textures/oak-planks.png") 0 0 / 48px 48px;
+        image-rendering: pixelated;
+        box-shadow: inset 2px 2px rgb(255 255 255 / 18%), inset -2px -2px rgb(0 0 0 / 25%);
+        animation: pop 120ms steps(3, end);
+      }
+
+      @keyframes pop { from { opacity: 0; transform: translateY(-8px); } }
+
+      .top {
+        display: flex;
+        flex: none;
+        gap: 6px;
+        align-items: center;
+        height: 26px;
+        padding: 0 6px;
+        background: rgb(59 42 23 / 22%);
+        color: #2b1d0e;
+        font-size: 14px;
+        cursor: grab;
+      }
+
+      .top img { width: 16px; height: 16px; image-rendering: pixelated; pointer-events: none; }
+      .top .title { flex: 1; pointer-events: none; }
+      .top:active { cursor: grabbing; }
+
+      .lines {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-color: #6b4f2c transparent;
+        scrollbar-width: thin;
+      }
+
+      .lines-inner { padding: 4px 8px 4px 2px; }
+
+      .line { position: relative; display: flex; gap: 2px; align-items: flex-start; }
+
+      .grip {
+        flex: none;
+        width: 14px;
+        height: 22px;
+        opacity: 0;
+        background: radial-gradient(circle, #3b2a17 1.5px, transparent 1.6px) 2px 4px / 5px 5px;
+        cursor: grab;
+      }
+
+      .line:hover .grip { opacity: 0.55; }
+      .line.is-dragging { opacity: 0.35; }
+
+      .text {
+        flex: 1;
+        min-width: 0;
+        min-height: 22px;
+        color: #1b1209;
+        font: 400 16px/22px "Minecraft", monospace;
+        outline: none;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        user-select: text;
+        cursor: text;
+      }
+
+      body.is-empty .text:empty::before { content: "Type a to-do\2026"; color: rgb(27 18 9 / 45%); }
+
+      .drop-marker { height: 2px; margin: 0 6px 0 16px; background: #2b1d0e; }
+
+      .bottom {
+        display: flex;
+        flex: none;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+        height: 28px;
+        padding: 0 6px 0 18px;
+      }
+
+      .status { overflow: hidden; color: #2b1d0e; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+
+      .save {
+        flex: none;
+        padding: 2px 6px;
+        border: 2px solid #000;
+        border-radius: 0;
+        background: #7d7d7d;
+        box-shadow: inset 2px 2px #b5b5b5, inset -2px -2px #4a4a4a;
+        color: #fff;
+        font: 400 12px "Minecraft", monospace;
+        text-shadow: 1px 1px #2e2e2e;
+        cursor: pointer;
+      }
+
+      .save:hover, .save:focus-visible { background: #6f7fb8; box-shadow: inset 2px 2px #a3b1ea, inset -2px -2px #3b4777; outline: none; }
+
+      /* resize from the bottom-left corner (the sign is anchored at the top right) */
+      .resize {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        background: linear-gradient(45deg, transparent 0 45%, #3b2a17 45% 55%, transparent 55% 65%, #3b2a17 65% 75%, transparent 75%);
+        cursor: nesw-resize;
+      }
+    </style>
+  </head>
+  <body class="is-collapsed">
+    <button class="icon" type="button" title="To-do list (Alt+T hides it)" aria-label="Open to-do list">
+      <img src="../../tools/shared/icons/oak-sign.png" alt="" draggable="false" />
+    </button>
+    <section class="sign" aria-label="To-do list">
+      <div class="top" title="Drag to move">
+        <img src="../../tools/shared/icons/oak-sign.png" alt="" draggable="false" />
+        <span class="title">To-do</span>
+      </div>
+      <div class="lines"><div class="lines-inner" role="list"></div></div>
+      <div class="bottom">
+        <span class="status" role="status"></span>
+        <button class="save" type="button" title="Save a copy of this list to your inventory">Save to inventory</button>
+      </div>
+      <div class="resize" title="Drag to resize"></div>
+    </section>
+    <script src="todo-page.js"></script>
+  </body>
+</html>
